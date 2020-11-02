@@ -8,7 +8,9 @@ edition = "2018"
 
 [dependencies]
 amethyst = {version = "0.15.2", features = ["no-slow-safety-checks", "tiles"]}
+amethyst_utils = "0.15.3"
 log = { version = "0.4.8", features = ["serde"] }
+rand = "0.7.3"
 
 [features]
 default = ["vulkan"]

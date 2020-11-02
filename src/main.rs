@@ -1,4 +1,5 @@
 use amethyst::{
+    core::frame_limiter::FrameRateLimitStrategy,
     core::transform::TransformBundle,
     input::{InputBundle, StringBindings},
     prelude::*,
@@ -10,9 +11,11 @@ use amethyst::{
     tiles::RenderTiles2D,
     ui::{RenderUi, UiBundle},
     utils::application_root_dir,
+    utils::fps_counter::FpsCounterBundle,
 };
 
 mod state;
+mod system;
 mod tile;
 
 fn main() -> amethyst::Result<()> {
@@ -30,6 +33,12 @@ fn main() -> amethyst::Result<()> {
             InputBundle::<StringBindings>::new().with_bindings_from_file(&key_bindings_path)?,
         )?
         .with_bundle(UiBundle::<StringBindings>::new())?
+        .with_bundle(FpsCounterBundle::default())?
+        .with(
+            system::fps::ExampleSystem::default(),
+            "example_system",
+            &["input_system"],
+        )
         .with_bundle(
             RenderingBundle::<DefaultBackend>::new()
                 .with_plugin(
@@ -38,10 +47,13 @@ fn main() -> amethyst::Result<()> {
                 )
                 .with_plugin(RenderUi::default())
                 .with_plugin(RenderFlat2D::default())
-                .with_plugin(RenderTiles2D::<tile::SimpleTile>::default()),
+                .with_plugin(RenderTiles2D::<tile::RoomTile>::default()),
         )?;
 
-    let mut game = Application::new(resources, state::room::RoomState, game_data)?;
+    let mut game = Application::build(resources, state::room::RoomState)?
+        .with_frame_limit(FrameRateLimitStrategy::Yield, 101)
+        .build(game_data)?;
+
     game.run();
 
     Ok(())

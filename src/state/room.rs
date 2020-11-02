@@ -1,27 +1,18 @@
 use amethyst::{
     assets::{AssetStorage, Handle, Loader},
-    core::{
-        math::{Point3, Vector2, Vector3},
-        Named, Parent, Time, Transform, TransformBundle,
-    },
-    ecs::{
-        Component, Entities, Entity, Join, LazyUpdate, NullStorage, Read, ReadExpect, ReadStorage,
-        System, WriteStorage,
-    },
-    input::{is_close_requested, is_key_down, InputBundle, InputHandler, StringBindings},
+    core::{math::Point3, math::Vector3, Named, Parent, Transform},
+    ecs::{Component, Entity, NullStorage},
+    input::{is_close_requested, is_key_down},
     prelude::*,
     renderer::{
-        camera::{ActiveCamera, Camera},
-        debug_drawing::DebugLinesComponent,
+        camera::Camera,
         formats::texture::ImageFormat,
-        palette::Srgba,
         sprite::{SpriteRender, SpriteSheet, SpriteSheetFormat, SpriteSheetHandle},
         transparent::Transparent,
-        types::DefaultBackend,
-        RenderDebugLines, RenderFlat2D, RenderToWindow, RenderingBundle, Texture,
+        Texture,
     },
-    tiles::{MortonEncoder, RenderTiles2D, Tile, TileMap},
-    utils::application_root_dir,
+    tiles::{MapStorage, TileMap},
+    ui::{RenderUi, UiBundle, UiCreator, UiFinder, UiText},
     window::ScreenDimensions,
     winit,
 };
@@ -85,42 +76,64 @@ fn init_player(world: &mut World, sprite_sheet: &SpriteSheetHandle) -> Entity {
         .build()
 }
 
-use crate::tile::SimpleTile;
+use crate::tile::{RoomTile, TileType};
+use rand::seq::SliceRandom;
+use rand::thread_rng;
 
 fn init_map(world: &mut World, sprite_sheet_handle: Handle<SpriteSheet>) {
-    let map = TileMap::<SimpleTile>::new(
-        Vector3::new(20, 2, 1),  // The dimensions of the map
-        Vector3::new(32, 32, 1), // The dimensions of each tile
+    let width = 20;
+    let height = 20;
+
+    let mut map = TileMap::<RoomTile>::new(
+        Vector3::new(width, height, 1), // The dimensions of the map
+        Vector3::new(16, 16, 1),        // The dimensions of each tile
         Some(sprite_sheet_handle),
     );
     let transform = Transform::default();
+
+    println!("Building map.");
+
+    let mut rng = thread_rng();
+    for y in 0..height {
+        for x in 0..width {
+            let mut tile = map.get_mut(&Point3::new(x, y, 0)).unwrap();
+            tile.sprite = [TileType::Floor, TileType::WallN].choose(&mut rng).copied();
+        }
+    }
 
     world.create_entity().with(map).with(transform).build();
 }
 
 impl SimpleState for RoomState {
-    fn on_start(&mut self, mut data: StateData<'_, GameData<'_, '_>>) {
-        data.world.register::<Named>();
-        data.world.register::<Player>();
+    fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
+        let world = data.world;
+        world.register::<Named>();
+        world.register::<Player>();
 
         let circle_sprite_sheet_handle =
-            load_sprite_sheet(&data.world, "sprites/logo.png", "sprites/logo.ron");
-        let player = init_player(data.world, &circle_sprite_sheet_handle);
+            load_sprite_sheet(&world, "sprites/logo.png", "sprites/logo.ron");
+
+        let player = init_player(world, &circle_sprite_sheet_handle);
 
         let (width, height) = {
-            let dim = data.world.read_resource::<ScreenDimensions>();
+            let dim = world.read_resource::<ScreenDimensions>();
             (dim.width(), dim.height())
         };
 
         let _camera = init_camera(
-            data.world,
+            world,
             player,
             Transform::from(Vector3::new(0.0, 0.0, 1.1)),
             Camera::standard_2d(width, height),
         );
 
-        let spritesheet_handle = load_sprite_sheet(&data.world, "tiles.png", "sprites.ron");
-        init_map(data.world, spritesheet_handle.clone())
+        let spritesheet_handle = load_sprite_sheet(&world, "tiles.png", "sprites.ron");
+        init_map(world, spritesheet_handle);
+
+        // FIXME: move to global state?
+        world.exec(|mut creator: UiCreator<'_>| {
+            creator.create("ui/fps.ron", ());
+        });
     }
 
     fn handle_event(
