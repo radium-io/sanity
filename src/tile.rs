@@ -1,26 +1,22 @@
 extern crate amethyst;
 
 use amethyst::{core::math::Point3, ecs::World, tiles::Tile};
+use strum_macros::EnumIter;
 
-#[allow(dead_code)]
-#[derive(Clone, Copy)]
-pub enum TileType {
-    Floor,
-    WallN,
-    WallE,
-    WallS,
-    WallW,
-    CornerNE,
-    CornerSE,
-    CornerSW,
-    CornerNW,
-    DiagonalNE,
-    DiagonalSE,
+type TileSetIndex = usize;
+
+#[derive(Clone, Default, Debug)]
+pub struct Candidates {
+    pub n: Vec<TileSetIndex>,
+    pub e: Vec<TileSetIndex>,
+    pub s: Vec<TileSetIndex>,
+    pub w: Vec<TileSetIndex>,
 }
 
-#[derive(Clone, Default)]
+#[derive(Clone, Default, Debug)]
 pub struct RoomTile {
-    pub sprite: Option<TileType>,
+    pub sprite: Option<TileSetIndex>,
+    pub candidates: Candidates,
 }
 
 impl Tile for RoomTile {

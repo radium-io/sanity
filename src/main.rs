@@ -50,7 +50,7 @@ fn main() -> amethyst::Result<()> {
                 .with_plugin(RenderTiles2D::<tile::RoomTile>::default()),
         )?;
 
-    let mut game = Application::build(resources, state::room::RoomState)?
+    let mut game = Application::build(resources, state::room::RoomState::default())?
         .with_frame_limit(FrameRateLimitStrategy::Yield, 101)
         .build(game_data)?;
 

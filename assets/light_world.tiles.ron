@@ -1,0 +1,9 @@
+Grid((
+    // Width of the texture used by the sprite sheet
+    texture_width: 768,
+    // Height of the texture used by the sprite sheet
+    texture_height: 512,
+    // Specifies the number of columns in the sprite sheet
+    columns: 96,
+    rows: Some(64),
+))

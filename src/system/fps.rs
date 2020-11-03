@@ -1,38 +1,10 @@
 use amethyst::{
-    assets::{
-        Completion, Handle, HotReloadBundle, Prefab, PrefabLoader, PrefabLoaderSystemDesc,
-        ProgressCounter, RonFormat,
-    },
-    core::{
-        math::{UnitQuaternion, Vector3},
-        timing::Time,
-        transform::{Transform, TransformBundle},
-    },
+    core::timing::Time,
     derive::SystemDesc,
-    ecs::prelude::{
-        Entity, Join, Read, ReadStorage, System, SystemData, WorldExt, Write, WriteStorage,
-    },
-    input::{
-        get_key, is_close_requested, is_key_down, ElementState, InputBundle, StringBindings,
-        VirtualKeyCode,
-    },
-    prelude::*,
-    renderer::{
-        light::Light,
-        palette::{Srgb, Srgba},
-        plugins::{RenderShaded3D, RenderToWindow},
-        rendy::mesh::{Normal, Position, TexCoord},
-        resources::AmbientColor,
-        types::DefaultBackend,
-        Camera, RenderingBundle,
-    },
-    ui::{RenderUi, UiBundle, UiCreator, UiFinder, UiText},
-    utils::{
-        application_root_dir,
-        fps_counter::{FpsCounter, FpsCounterBundle},
-        scene::BasicScenePrefab,
-    },
-    Error,
+    ecs::prelude::{Entity, Read, System, SystemData, WriteStorage},
+    ui::{UiFinder, UiText},
+    utils::fps_counter::FpsCounter,
+    tiles::{MapStorage, TileMap},
 };
 
 #[derive(Default, SystemDesc)]
