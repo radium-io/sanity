@@ -12,6 +12,8 @@ amethyst_utils = "0.15.3"
 log = { version = "0.4.8", features = ["serde"] }
 rand = "0.7.3"
 rayon = "1.5.0"
+ron = "0.6.2"
+serde = "1.0.117"
 strum = "0.19.4"
 strum_macros = "0.19.4"
 

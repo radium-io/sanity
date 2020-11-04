@@ -1,4 +1,5 @@
 use amethyst::{
+    assets::Processor,
     core::frame_limiter::FrameRateLimitStrategy,
     core::transform::TransformBundle,
     input::{InputBundle, StringBindings},
@@ -14,6 +15,7 @@ use amethyst::{
     utils::fps_counter::FpsCounterBundle,
 };
 
+mod assets;
 mod state;
 mod system;
 mod tile;
@@ -39,6 +41,7 @@ fn main() -> amethyst::Result<()> {
             "example_system",
             &["input_system"],
         )
+        .with(Processor::<assets::Pairs>::new(), "", &[])
         .with_bundle(
             RenderingBundle::<DefaultBackend>::new()
                 .with_plugin(

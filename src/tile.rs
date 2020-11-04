@@ -26,6 +26,6 @@ impl Tile for RoomTile {
         // this could be stored on struct or we can determine it later but we would need to know
         // how many doors are in the room (which means need ref to room)
         // also would probably have some animation for change
-        self.sprite.map(|s| s as usize)
+        self.sprite
     }
 }
