@@ -1,27 +1,22 @@
 use crate::tile::RoomTile;
-use amethyst::renderer::sprite::Sprites;
 use amethyst::{
-    assets::{AssetStorage, Format, Handle, Loader, PrefabData, ProgressCounter, RonFormat},
-    core::{math::Point3, math::Vector3, Named, Parent, Transform},
-    derive::PrefabData,
-    ecs::{Component, Entity, Join, NullStorage},
+    assets::{AssetStorage, Handle, Loader, ProgressCounter, RonFormat},
+    core::{math::Point3, math::Vector3, Named, Transform},
+    ecs::{Entity, Join},
     input::{is_close_requested, is_key_down},
     prelude::*,
     renderer::{
         camera::Camera,
         formats::texture::ImageFormat,
-        sprite::{SpriteRender, SpriteSheet, SpriteSheetFormat, SpriteSheetHandle},
-        transparent::Transparent,
+        sprite::{SpriteSheet, SpriteSheetFormat},
         Texture,
     },
     tiles::{MapStorage, TileMap},
     ui::UiCreator,
     window::ScreenDimensions,
-    winit, Error,
+    winit,
 };
 use rand::prelude::*;
-use serde::{Deserialize, Serialize};
-use strum::IntoEnumIterator;
 
 #[derive(Debug, Default)]
 pub struct RoomState {
@@ -54,55 +49,73 @@ fn init_camera(world: &mut World, transform: Transform, camera: Camera) -> Entit
         .build()
 }
 
+use wfc::*;
+
 fn gen_map(map: &mut TileMap<RoomTile>, pairs: &crate::assets::Pairs, width: u32, height: u32) {
     let mut rng = thread_rng();
 
-    // 1. seed a random tile to start the room
-    let mut x = 0;
-    let mut y = 0;
-    let mut sprite = rng.gen_range(0, 3);
-
-    // 2. calc possible neighborhood of that tile
-    while x < width {
-        let mut tile = map
-            .get_mut(&Point3::new(x, y, 0))
-            .expect(&format!("{:?}", x));
-
-        // based on sprite to the left
-        tile.sprite = pairs
-            .clone()
-            .we
-            .into_iter()
-            .filter(|p| p.0 == sprite)
-            .collect::<Vec<(usize, usize)>>()
-            .choose(&mut rng)
-            .map(|p| p.1)
-            .or(Some(0));
-
-        sprite = tile.sprite.clone().unwrap();
-
-        let mut above = sprite;
-
-        while y < height {
-            y = y + 1;
-
-            let mut below = map.get_mut(&Point3::new(x, y, 0)).unwrap();
-            // based on sprite above
-            below.sprite = pairs
-                .clone()
-                .ns
-                .into_iter()
-                .filter(|p| p.0 == above)
-                .collect::<Vec<(usize, usize)>>()
-                .choose(&mut rng)
-                .map(|p| p.1)
-                .or(Some(0));
-
-            above = below.sprite.clone().unwrap();
-        }
-        y = 0;
-        x = x + 1;
+    let mut v: Vec<PatternDescription> = Vec::new();
+    for idx in 0..35 {
+        let p = PatternDescription::new(
+            std::num::NonZeroU32::new(1),
+            direction::CardinalDirectionTable::default(),
+        );
+        v.push(p);
     }
+
+    for p in pairs.ns.clone() {
+        println!("Adding ns pair {:?}", p);
+        let first = v.get_mut(p.0).unwrap();
+        first
+            .allowed_neighbours
+            .get_mut(direction::CardinalDirection::South)
+            .push(p.1 as u32);
+
+        let second = v.get_mut(p.1).unwrap();
+        second
+            .allowed_neighbours
+            .get_mut(direction::CardinalDirection::North)
+            .push(p.0 as u32);
+    }
+    for p in pairs.we.clone() {
+        println!("Adding we pair {:?}", p);
+        let first = v.get_mut(p.0).unwrap();
+        first
+            .allowed_neighbours
+            .get_mut(direction::CardinalDirection::East)
+            .push(p.1 as u32);
+
+        let second = v.get_mut(p.1).unwrap();
+        second
+            .allowed_neighbours
+            .get_mut(direction::CardinalDirection::West)
+            .push(p.0 as u32);
+    }
+
+    let patterns: PatternTable<PatternDescription> = PatternTable::from_vec(v);
+    let mut context = wfc::Context::new();
+    let mut wave = wfc::Wave::new(wfc::Size::try_new(width, height).unwrap());
+    let mut stats = wfc::GlobalStats::new(patterns);
+
+    let mut wfc_run = wfc::RunBorrow::new_wrap_forbid(
+        &mut context,
+        &mut wave,
+        &mut stats,
+        wfc::wrap::WrapNone,
+        wfc::ForbidNothing,
+        &mut rng,
+    );
+
+    println!("Running collapse!");
+
+    wfc_run.collapse_retrying(wfc::retry::Forever, &mut rng);
+
+    wave.grid().map_ref_with_coord(|c, cell| {
+        let mut tile = map
+            .get_mut(&Point3::new(c.x as u32, c.y as u32, 0))
+            .expect(&format!("{:?}", c.x));
+        tile.sprite = Some(cell.chosen_pattern_id().expect("Chosen tile for coord.") as usize)
+    });
 }
 
 use amethyst::ecs::prelude::*;
@@ -128,8 +141,8 @@ impl SimpleState for RoomState {
 
         let spritesheet_handle =
             load_sprite_sheet(&world, "Dungeon_Tileset.png", "Dungeon_Tileset.ron");
-        let width = 20;
-        let height = 20;
+        let width = 32;
+        let height = 32;
 
         let map = TileMap::<RoomTile>::new(
             Vector3::new(width, height, 1), // The dimensions of the map
@@ -172,7 +185,7 @@ impl SimpleState for RoomState {
                     Read<'_, AssetStorage<crate::assets::Pairs>>,
                 )| {
                     for (map, pair) in (&mut maps, &pairs).join() {
-                        gen_map(map, assets.get(pair).unwrap(), 20, 20);
+                        gen_map(map, assets.get(pair).unwrap(), 8, 8);
                     }
                 },
             );
@@ -201,7 +214,7 @@ impl SimpleState for RoomState {
                         Read<'_, AssetStorage<crate::assets::Pairs>>,
                     )| {
                         for (map, pair) in (&mut maps, &pairs).join() {
-                            gen_map(map, assets.get(pair).unwrap(), 20, 20);
+                            gen_map(map, assets.get(pair).unwrap(), 8, 8);
                         }
                     },
                 );

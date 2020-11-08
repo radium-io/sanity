@@ -20,6 +20,8 @@ mod state;
 mod system;
 mod tile;
 
+use amethyst::assets::{HotReloadBundle, HotReloadStrategy};
+
 fn main() -> amethyst::Result<()> {
     amethyst::start_logger(Default::default());
 
@@ -30,6 +32,7 @@ fn main() -> amethyst::Result<()> {
     let key_bindings_path = app_root.join("config/input.ron");
 
     let game_data = GameDataBuilder::default()
+        .with_bundle(HotReloadBundle::new(HotReloadStrategy::every(2)))?
         .with_bundle(TransformBundle::new())?
         .with_bundle(
             InputBundle::<StringBindings>::new().with_bindings_from_file(&key_bindings_path)?,
