@@ -55,7 +55,7 @@ fn gen_map(map: &mut TileMap<RoomTile>, pairs: &crate::assets::Pairs, width: u32
     let mut rng = thread_rng();
 
     let mut v: Vec<PatternDescription> = Vec::new();
-    for idx in 0..35 {
+    for idx in 0..38 {
         let p = PatternDescription::new(
             std::num::NonZeroU32::new(1),
             direction::CardinalDirectionTable::default(),
@@ -64,7 +64,6 @@ fn gen_map(map: &mut TileMap<RoomTile>, pairs: &crate::assets::Pairs, width: u32
     }
 
     for p in pairs.ns.clone() {
-        println!("Adding ns pair {:?}", p);
         let first = v.get_mut(p.0).unwrap();
         first
             .allowed_neighbours
@@ -78,7 +77,6 @@ fn gen_map(map: &mut TileMap<RoomTile>, pairs: &crate::assets::Pairs, width: u32
             .push(p.0 as u32);
     }
     for p in pairs.we.clone() {
-        println!("Adding we pair {:?}", p);
         let first = v.get_mut(p.0).unwrap();
         first
             .allowed_neighbours
@@ -185,7 +183,7 @@ impl SimpleState for RoomState {
                     Read<'_, AssetStorage<crate::assets::Pairs>>,
                 )| {
                     for (map, pair) in (&mut maps, &pairs).join() {
-                        gen_map(map, assets.get(pair).unwrap(), 8, 8);
+                        gen_map(map, assets.get(pair).unwrap(), 16, 16);
                     }
                 },
             );
@@ -214,7 +212,7 @@ impl SimpleState for RoomState {
                         Read<'_, AssetStorage<crate::assets::Pairs>>,
                     )| {
                         for (map, pair) in (&mut maps, &pairs).join() {
-                            gen_map(map, assets.get(pair).unwrap(), 8, 8);
+                            gen_map(map, assets.get(pair).unwrap(), 16, 16);
                         }
                     },
                 );
