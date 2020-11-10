@@ -1,4 +1,3 @@
-use crate::tile::RoomTile;
 use amethyst::{
     assets::{AssetStorage, Handle, Loader, ProgressCounter, RonFormat},
     core::{math::Point3, math::Vector3, Named, Transform},
@@ -16,7 +15,9 @@ use amethyst::{
     window::ScreenDimensions,
     winit,
 };
+use amethyst_utils::ortho_camera::{CameraNormalizeMode, CameraOrtho, CameraOrthoWorldCoordinates};
 use rand::prelude::*;
+use sanity_lib::tile::RoomTile;
 
 #[derive(Debug, Default)]
 pub struct RoomState {
@@ -40,22 +41,18 @@ fn load_sprite_sheet(world: &World, png_path: &str, ron_path: &str) -> Handle<Sp
     )
 }
 
-fn init_camera(world: &mut World, transform: Transform, camera: Camera) -> Entity {
-    world
-        .create_entity()
-        .with(transform)
-        .with(camera)
-        .named("camera")
-        .build()
-}
-
 use wfc::*;
 
-fn gen_map(map: &mut TileMap<RoomTile>, pairs: &crate::assets::Pairs, width: u32, height: u32) {
+fn gen_map(
+    map: &mut TileMap<RoomTile>,
+    pairs: &sanity_lib::assets::Pairs,
+    width: u32,
+    height: u32,
+) {
     let mut rng = thread_rng();
 
     let mut v: Vec<PatternDescription> = Vec::new();
-    for idx in 0..38 {
+    for _ in 0..38 {
         let p = PatternDescription::new(
             std::num::NonZeroU32::new(1),
             direction::CardinalDirectionTable::default(),
@@ -123,31 +120,37 @@ impl SimpleState for RoomState {
         let StateData { world, .. } = data;
 
         world.register::<Named>();
-        world.register::<Handle<crate::assets::Pairs>>();
+        world.register::<Handle<sanity_lib::assets::Pairs>>();
 
         let (width, height) = {
             let dim = world.read_resource::<ScreenDimensions>();
             (dim.width(), dim.height())
         };
 
-        let _camera = init_camera(
-            world,
-            //player,
-            Transform::from(Vector3::new(0.0, 0.0, 1.1)),
-            Camera::standard_2d(width, height),
-        );
+        let mut ortho = CameraOrtho::normalized(CameraNormalizeMode::Contain);
+        ortho.world_coordinates = CameraOrthoWorldCoordinates {
+            left: -width / 3. / 2.,
+            right: width / 3. / 2.,
+            top: -height / 3. / 2.,
+            bottom: height / 3. / 2.,
+            ..Default::default()
+        };
+        world
+            .create_entity()
+            .with(Transform::from(Vector3::new(0., 0., 2.)))
+            .with(Camera::standard_2d(width, height))
+            .with(ortho)
+            .named("camera")
+            .build();
 
         let spritesheet_handle =
             load_sprite_sheet(&world, "Dungeon_Tileset.png", "Dungeon_Tileset.ron");
-        let width = 32;
-        let height = 32;
 
         let map = TileMap::<RoomTile>::new(
-            Vector3::new(width, height, 1), // The dimensions of the map
-            Vector3::new(32, 32, 1),        // The dimensions of each tile
+            Vector3::new(16, 16, 1), // The dimensions of the map
+            Vector3::new(32, 32, 1), // The dimensions of each tile
             Some(spritesheet_handle),
         );
-        let transform = Transform::default();
 
         // load the tile pairs for this tileset
         let pairs = {
@@ -156,15 +159,16 @@ impl SimpleState for RoomState {
                 "Dungeon_Tileset.pairs.ron",
                 RonFormat,
                 &mut self.progress_counter,
-                &world.read_resource::<AssetStorage<crate::assets::Pairs>>(),
+                &world.read_resource::<AssetStorage<sanity_lib::assets::Pairs>>(),
             )
         };
 
+        let mut t = Transform::default();
         world
             .create_entity()
             .with(map)
             .with(pairs)
-            .with(transform)
+            .with(t)
             .named("map")
             .build();
 
@@ -179,8 +183,8 @@ impl SimpleState for RoomState {
             data.world.exec(
                 |(mut maps, pairs, assets): (
                     WriteStorage<'_, TileMap<RoomTile>>,
-                    ReadStorage<'_, crate::assets::PairsHandle>,
-                    Read<'_, AssetStorage<crate::assets::Pairs>>,
+                    ReadStorage<'_, sanity_lib::assets::PairsHandle>,
+                    Read<'_, AssetStorage<sanity_lib::assets::Pairs>>,
                 )| {
                     for (map, pair) in (&mut maps, &pairs).join() {
                         gen_map(map, assets.get(pair).unwrap(), 16, 16);
@@ -208,8 +212,8 @@ impl SimpleState for RoomState {
                 data.world.exec(
                     |(mut maps, pairs, assets): (
                         WriteStorage<'_, TileMap<RoomTile>>,
-                        ReadStorage<'_, crate::assets::PairsHandle>,
-                        Read<'_, AssetStorage<crate::assets::Pairs>>,
+                        ReadStorage<'_, sanity_lib::assets::PairsHandle>,
+                        Read<'_, AssetStorage<sanity_lib::assets::Pairs>>,
                     )| {
                         for (map, pair) in (&mut maps, &pairs).join() {
                             gen_map(map, assets.get(pair).unwrap(), 16, 16);

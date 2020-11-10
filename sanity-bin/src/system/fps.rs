@@ -4,7 +4,6 @@ use amethyst::{
     ecs::prelude::{Entity, Read, System, SystemData, WriteStorage},
     ui::{UiFinder, UiText},
     utils::fps_counter::FpsCounter,
-    tiles::{MapStorage, TileMap},
 };
 
 #[derive(Default, SystemDesc)]

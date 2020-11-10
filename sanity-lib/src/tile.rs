@@ -1,7 +1,6 @@
 extern crate amethyst;
 
 use amethyst::{core::math::Point3, ecs::World, tiles::Tile};
-use strum_macros::EnumIter;
 
 type TileSetIndex = usize;
 

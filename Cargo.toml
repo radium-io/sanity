@@ -1,0 +1,7 @@
+[workspace]
+
+members = [
+    "sanity-lib",
+    "sanity-bin",
+    "editor"
+]

@@ -15,12 +15,11 @@ use amethyst::{
     utils::fps_counter::FpsCounterBundle,
 };
 
-mod assets;
 mod state;
 mod system;
-mod tile;
 
 use amethyst::assets::{HotReloadBundle, HotReloadStrategy};
+use amethyst_utils::ortho_camera::CameraOrthoSystem;
 
 fn main() -> amethyst::Result<()> {
     amethyst::start_logger(Default::default());
@@ -32,6 +31,7 @@ fn main() -> amethyst::Result<()> {
     let key_bindings_path = app_root.join("config/input.ron");
 
     let game_data = GameDataBuilder::default()
+        .with(CameraOrthoSystem::default(), "ortho_camera_system", &[])
         .with_bundle(HotReloadBundle::new(HotReloadStrategy::every(2)))?
         .with_bundle(TransformBundle::new())?
         .with_bundle(
@@ -44,7 +44,7 @@ fn main() -> amethyst::Result<()> {
             "example_system",
             &["input_system"],
         )
-        .with(Processor::<assets::Pairs>::new(), "", &[])
+        .with(Processor::<sanity_lib::assets::Pairs>::new(), "", &[])
         .with_bundle(
             RenderingBundle::<DefaultBackend>::new()
                 .with_plugin(
@@ -53,7 +53,7 @@ fn main() -> amethyst::Result<()> {
                 )
                 .with_plugin(RenderUi::default())
                 .with_plugin(RenderFlat2D::default())
-                .with_plugin(RenderTiles2D::<tile::RoomTile>::default()),
+                .with_plugin(RenderTiles2D::<sanity_lib::tile::RoomTile>::default()),
         )?;
 
     let mut game = Application::build(resources, state::room::RoomState::default())?

@@ -1,6 +1,6 @@
 use amethyst::{
     assets::{Asset, Handle},
-    ecs::{Component, DenseVecStorage, VecStorage},
+    ecs::VecStorage,
 };
 use serde::{Deserialize, Serialize};
 

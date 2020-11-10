@@ -1,5 +1,5 @@
 [package]
-name = "editor"
+name = "sanity-lib"
 version = "0.1.0"
 authors = ["Emory Petermann <emory@onlyfor.us>"]
 edition = "2018"
@@ -7,11 +7,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-sanity-lib = { path = "../sanity-lib" }
-amethyst = {version = "0.15.3", features = ["no-slow-safety-checks", "tiles"]}
-amethyst_utils = "0.15.3"
-rand = "0.7.3"
-nfd = "0.0.4"
+amethyst = "0.15.3"
+serde = "1.0.117"
 
 [features]
 default = ["vulkan"]

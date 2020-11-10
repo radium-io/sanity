@@ -1,6 +1,5 @@
 use amethyst::{
     assets::Processor,
-    core::frame_limiter::FrameRateLimitStrategy,
     core::transform::TransformBundle,
     input::{InputBundle, StringBindings},
     prelude::*,
@@ -12,15 +11,13 @@ use amethyst::{
     tiles::RenderTiles2D,
     ui::{RenderUi, UiBundle},
     utils::application_root_dir,
-    utils::fps_counter::FpsCounterBundle,
 };
 
-mod assets;
+use amethyst::assets::{HotReloadBundle, HotReloadStrategy};
+use amethyst_utils::ortho_camera::CameraOrthoSystem;
+use sanity_lib;
 mod state;
 mod system;
-mod tile;
-
-use amethyst::assets::{HotReloadBundle, HotReloadStrategy};
 
 fn main() -> amethyst::Result<()> {
     amethyst::start_logger(Default::default());
@@ -28,20 +25,12 @@ fn main() -> amethyst::Result<()> {
     let app_root = application_root_dir()?;
 
     let game_data = GameDataBuilder::default()
-        .with_bundle(HotReloadBundle::new(HotReloadStrategy::every(2)))?
+        .with(CameraOrthoSystem::default(), "ortho_camera_system", &[])
         .with_bundle(TransformBundle::new())?
-        .with_bundle(
-            InputBundle::<StringBindings>::new()
-                .with_bindings_from_file(&app_root.join("config/input.ron"))?,
-        )?
+        .with_bundle(HotReloadBundle::new(HotReloadStrategy::every(2)))?
+        .with_bundle(InputBundle::<StringBindings>::new())?
         .with_bundle(UiBundle::<StringBindings>::new())?
-        .with_bundle(FpsCounterBundle::default())?
-        .with(
-            system::fps::ExampleSystem::default(),
-            "example_system",
-            &["input_system"],
-        )
-        .with(Processor::<assets::Pairs>::new(), "", &[])
+        .with(Processor::<sanity_lib::assets::Pairs>::new(), "", &[])
         .with_bundle(
             RenderingBundle::<DefaultBackend>::new()
                 .with_plugin(
@@ -50,11 +39,31 @@ fn main() -> amethyst::Result<()> {
                 )
                 .with_plugin(RenderUi::default())
                 .with_plugin(RenderFlat2D::default())
-                .with_plugin(RenderTiles2D::<tile::RoomTile>::default()),
-        )?;
+                .with_plugin(RenderTiles2D::<sanity_lib::tile::RoomTile>::default()),
+        )?
+        .with(
+            system::TileSelectSystem,
+            "tile_select_system",
+            &["input_system"],
+        );
+    // allow args for ron and png
+    let args: Vec<String> = std::env::args().collect();
+    let assets_dir = app_root.join("assets");
 
-    let mut game = Application::build(app_root.join("assets"), state::room::RoomState::default())?
-        .build(game_data)?;
+    let mut game = match args.len() {
+        3 => Application::build(
+            assets_dir,
+            crate::state::EditState {
+                png: args[1].parse().unwrap(),
+                ron: args[2].parse().unwrap(),
+                ..Default::default()
+            },
+        )?
+        .build(game_data)?,
+        _ => {
+            Application::build(assets_dir, crate::state::LoadState::default())?.build(game_data)?
+        }
+    };
 
     game.run();
 

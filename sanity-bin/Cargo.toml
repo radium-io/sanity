@@ -7,16 +7,17 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-amethyst = {version = "0.15.2", features = ["no-slow-safety-checks", "tiles"]}
+sanity-lib = { path = "../sanity-lib" }
+amethyst = {version = "0.15.3", features = ["no-slow-safety-checks", "tiles"]}
 amethyst_utils = "0.15.3"
 direction = "0.17.10"
 grid_2d = "0.14.6"
-log = { version = "0.4.8", features = ["serde"] }
+log = { version = "0.4.11", features = ["serde"] }
 rand = "0.7.3"
 rayon = "1.5.0"
 ron = "0.6.2"
 serde = "1.0.117"
-strum = "0.19.4"
+strum = "0.19.5"
 strum_macros = "0.19.4"
 wfc = "0.9.2"
 

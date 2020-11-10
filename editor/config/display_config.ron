@@ -1,0 +1,4 @@
+(
+  title: "Sanity Editor",
+  dimensions: Some((1920, 1080)),
+)
