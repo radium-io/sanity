@@ -1,6 +1,6 @@
 extern crate amethyst;
 
-use amethyst::{core::math::Point3, ecs::World, tiles::Tile};
+use amethyst::{core::math::Point3, ecs::World, renderer::palette, tiles::Tile};
 
 type TileSetIndex = usize;
 
@@ -15,6 +15,7 @@ pub struct Candidates {
 #[derive(Clone, Default, Debug)]
 pub struct RoomTile {
     pub sprite: Option<TileSetIndex>,
+    pub tint: palette::Srgba,
     pub candidates: Candidates,
 }
 
@@ -26,5 +27,9 @@ impl Tile for RoomTile {
         // how many doors are in the room (which means need ref to room)
         // also would probably have some animation for change
         self.sprite
+    }
+
+    fn tint(&self, _: Point3<u32>, _: &World) -> palette::Srgba {
+        self.tint
     }
 }

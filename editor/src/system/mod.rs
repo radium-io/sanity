@@ -1,5 +1,4 @@
 extern crate amethyst;
-use amethyst::ecs::SystemData;
 use amethyst::{
     assets::AssetStorage,
     core::math::Vector3,
@@ -10,8 +9,9 @@ use amethyst::{
         Named,
     },
     derive::SystemDesc,
-    ecs::{Entities, Join, Read, ReadExpect, ReadStorage, System},
+    ecs::{Entities, Join, Read, ReadExpect, ReadStorage, System, WriteStorage},
     input::{InputHandler, StringBindings},
+    renderer::palette,
     renderer::{
         camera::{ActiveCamera, Camera},
         sprite::SpriteSheet,
@@ -21,6 +21,7 @@ use amethyst::{
     window::ScreenDimensions,
     winit,
 };
+use amethyst::{ecs::SystemData, tiles::MapStorage};
 use sanity_lib::tile::RoomTile;
 
 #[derive(SystemDesc)]
@@ -32,9 +33,7 @@ impl<'s> System<'s> for TileSelectSystem {
         Entities<'s>,
         ReadStorage<'s, Transform>,
         ReadStorage<'s, Camera>,
-        ReadStorage<'s, TileMap<RoomTile>>,
-        ReadStorage<'s, Named>,
-        Read<'s, AssetStorage<SpriteSheet>>,
+        WriteStorage<'s, TileMap<RoomTile>>,
         ReadExpect<'s, ScreenDimensions>,
         Read<'s, ActiveCamera>,
         Read<'s, InputHandler<StringBindings>>,
@@ -45,9 +44,7 @@ impl<'s> System<'s> for TileSelectSystem {
             entities,
             transforms,
             cameras,
-            tilemaps,
-            names,
-            sprite_sheets,
+            mut tilemaps,
             screen_dimensions,
             active_camera,
             input,
@@ -75,12 +72,14 @@ impl<'s> System<'s> for TileSelectSystem {
 
                     // Find any sprites which the mouse is currently inside
 
-                    for (tilemap, transform) in (&tilemaps, &transforms).join() {
-                        let tile_pos = tilemap.to_tile(
+                    for (tilemap, _) in (&mut tilemaps, &transforms).join() {
+                        if let Ok(tile_pos) = tilemap.to_tile(
                             &Vector3::new(mouse_world_position.x, mouse_world_position.y, 0.),
                             None,
-                        );
-                        println!("{:?}", tile_pos);
+                        ) {
+                            tilemap.get_mut(&tile_pos).unwrap().tint =
+                                palette::Srgba::new(1.0, 0.0, 0.0, 0.5);
+                        }
                     }
                 }
             }

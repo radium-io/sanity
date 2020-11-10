@@ -1,7 +1,6 @@
 use amethyst::{
     assets::{AssetStorage, Loader},
     input::is_close_requested,
-    input::VirtualKeyCode,
     StateEvent,
 };
 use amethyst::{
