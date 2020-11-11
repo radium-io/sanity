@@ -1,7 +1,7 @@
 use amethyst::{
     assets::{AssetStorage, Handle, Loader, ProgressCounter, RonFormat},
     core::{math::Point3, math::Vector3, Named, Transform},
-    ecs::{Entity, Join},
+    ecs::Join,
     input::{is_close_requested, is_key_down},
     prelude::*,
     renderer::{
@@ -163,7 +163,7 @@ impl SimpleState for RoomState {
             )
         };
 
-        let mut t = Transform::default();
+        let t = Transform::default();
         world
             .create_entity()
             .with(map)

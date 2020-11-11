@@ -42,7 +42,7 @@ fn main() -> amethyst::Result<()> {
                 .with_plugin(RenderTiles2D::<sanity_lib::tile::RoomTile>::default()),
         )?
         .with(
-            system::TileSelectSystem,
+            system::TileSelectSystem::default(),
             "tile_select_system",
             &["input_system"],
         );

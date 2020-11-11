@@ -5,3 +5,6 @@ members = [
     "sanity-bin",
     "editor"
 ]
+
+[profile.dev]
+debug = 0

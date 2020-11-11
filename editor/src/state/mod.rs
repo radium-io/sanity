@@ -1,5 +1,5 @@
 use amethyst::{
-    assets::{AssetStorage, Handle, Loader, Progress, ProgressCounter},
+    assets::{AssetStorage, Handle, Loader, Progress},
     prelude::*,
     renderer::{
         formats::texture::ImageFormat,

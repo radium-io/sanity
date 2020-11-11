@@ -12,11 +12,21 @@ pub struct Candidates {
     pub w: Vec<TileSetIndex>,
 }
 
-#[derive(Clone, Default, Debug)]
+#[derive(Clone, Debug)]
 pub struct RoomTile {
     pub sprite: Option<TileSetIndex>,
     pub tint: palette::Srgba,
     pub candidates: Candidates,
+}
+
+impl Default for RoomTile {
+    fn default() -> Self {
+        Self {
+            sprite: None,
+            tint: palette::Srgba::new(1., 1., 1., 1.),
+            candidates: Candidates::default(),
+        }
+    }
 }
 
 impl Tile for RoomTile {

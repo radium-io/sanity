@@ -1,20 +1,19 @@
-use amethyst::{
-    assets::{AssetStorage, Loader},
-    input::is_close_requested,
-    StateEvent,
+use amethyst::ui::{
+    get_default_font, Anchor, FontAsset, Interactable, LineMode, UiText, UiTransform,
 };
 use amethyst::{
-    assets::{Handle, ProgressCounter},
+    assets::Handle,
     core::Transform,
     renderer::camera::Camera,
     utils::ortho_camera::{CameraNormalizeMode, CameraOrtho},
     window::ScreenDimensions,
 };
-use amethyst::{ecs::prelude::*, ui::UiEventType};
 use amethyst::{
-    input::is_key_down,
-    ui::{get_default_font, Anchor, FontAsset, Interactable, LineMode, UiText, UiTransform},
+    assets::{AssetStorage, Loader},
+    input::is_close_requested,
+    StateEvent,
 };
+use amethyst::{ecs::prelude::*, ui::UiEventType};
 use amethyst::{
     prelude::{Builder, GameData, SimpleState, SimpleTrans, StateData, Trans, WorldExt},
     ui::UiEvent,
