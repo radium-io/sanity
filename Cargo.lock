@@ -1207,6 +1207,7 @@ dependencies = [
  "amethyst_utils",
  "nfd",
  "rand 0.7.3",
+ "ron 0.6.2",
  "sanity-lib",
 ]
 

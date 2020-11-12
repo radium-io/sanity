@@ -45,7 +45,8 @@ fn main() -> amethyst::Result<()> {
             system::TileSelectSystem::default(),
             "tile_select_system",
             &["input_system"],
-        );
+        )
+        .with(system::SaveSystem::default(), "save_system", &[]);
     // allow args for ron and png
     let args: Vec<String> = std::env::args().collect();
     let assets_dir = app_root.join("assets");
