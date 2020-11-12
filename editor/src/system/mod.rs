@@ -11,6 +11,7 @@ use amethyst::{
     input::{InputHandler, StringBindings},
     renderer::camera::{ActiveCamera, Camera},
     renderer::palette,
+    renderer::palette::Srgba,
     tiles::Map,
     tiles::TileMap,
     window::ScreenDimensions,
@@ -27,6 +28,12 @@ pub struct TileSelectSystem {
     right_down: bool,
 }
 
+fn tint_tile(tilemap: &mut TileMap<RoomTile>, tile_pos: &Point3<u32>, tint: palette::Srgba) {
+    if let Some(tile) = tilemap.get_mut(tile_pos) {
+        tile.tint = tint;
+    }
+}
+
 impl<'s> System<'s> for TileSelectSystem {
     // The same BindingTypes from the InputBundle needs to be inside the InputHandler
     type SystemData = (
@@ -38,6 +45,7 @@ impl<'s> System<'s> for TileSelectSystem {
         Read<'s, ActiveCamera>,
         Read<'s, InputHandler<StringBindings>>,
     );
+
     fn run(
         &mut self,
         (
@@ -69,7 +77,6 @@ impl<'s> System<'s> for TileSelectSystem {
                 let mouse_world_position = ray.at_distance(distance);
 
                 // Find any sprites which the mouse is currently inside
-
                 for (tilemap, _) in (&mut tilemaps, &transforms).join() {
                     match tilemap.to_tile(
                         &Vector3::new(mouse_world_position.x, mouse_world_position.y, 0.),
@@ -80,14 +87,12 @@ impl<'s> System<'s> for TileSelectSystem {
 
                             if input.mouse_button_is_down(winit::MouseButton::Left) {
                                 if !self.left_down {
-                                    if self.selected.is_some() {
-                                        let mut prev =
-                                            tilemap.get_mut(&self.selected.unwrap()).unwrap();
-
-                                        prev.tint = palette::Srgba::new(1., 1., 1., 1.);
+                                    if let Some(pos) = self.selected {
+                                        tint_tile(tilemap, &pos, Srgba::new(1., 1., 1., 1.))
                                     }
-                                    let mut tile = tilemap.get_mut(&tile_pos).unwrap();
-                                    tile.tint = palette::Srgba::new(1.0, 0.0, 0.0, 0.7);
+
+                                    tint_tile(tilemap, &tile_pos, Srgba::new(1.0, 0.0, 0.0, 0.7));
+
                                     self.selected = Some(tile_pos);
                                 }
                                 self.left_down = true;
@@ -96,20 +101,25 @@ impl<'s> System<'s> for TileSelectSystem {
 
                                 if input.mouse_button_is_down(winit::MouseButton::Right) {
                                     if !self.right_down {
-                                        let index =
-                                            tile_pos.x as usize + (tile_pos.y * 16) as usize;
-                                        if self.selected.is_some() {
-                                            let prev =
-                                                tilemap.get_mut(&self.selected.unwrap()).unwrap();
+                                        let index = tile_pos.x as usize
+                                            + (tile_pos.y * tilemap.dimensions().x) as usize;
+                                        if let Some(selected_pos) = self.selected {
+                                            let prev = tilemap.get_mut(&selected_pos).unwrap();
 
                                             if prev.candidates.s.contains(&index) {
                                                 prev.candidates.s.retain(|x| *x != index);
-                                                let mut tile = tilemap.get_mut(&tile_pos).unwrap();
-                                                tile.tint = palette::Srgba::new(1., 1., 1., 1.);
+                                                tint_tile(
+                                                    tilemap,
+                                                    &tile_pos,
+                                                    Srgba::new(1., 1., 1., 1.),
+                                                )
                                             } else {
                                                 prev.candidates.s.push(index);
-                                                let mut tile = tilemap.get_mut(&tile_pos).unwrap();
-                                                tile.tint = palette::Srgba::new(0.0, 1.0, 0.0, 0.7);
+                                                tint_tile(
+                                                    tilemap,
+                                                    &tile_pos,
+                                                    Srgba::new(0.0, 1.0, 0.0, 0.7),
+                                                )
                                             }
                                         }
                                     }
@@ -119,7 +129,36 @@ impl<'s> System<'s> for TileSelectSystem {
                                 }
                             }
                         }
-                        Err(err) => println!("{:?}", err),
+                        Err(_) => {}
+                    }
+
+                    // tint all tiles that are candidates (so selecting new tile will show candidates)
+                    if let Some(selected_pos) = self.selected {
+                        let s = tilemap.get(&selected_pos).unwrap().clone();
+                        let size = tilemap.dimensions();
+                        for idx in 0..(size.x * size.y) {
+                            if s.candidates.s.contains(&(idx as usize)) {
+                                tint_tile(
+                                    tilemap,
+                                    &Point3::new(
+                                        idx % tilemap.dimensions().x,
+                                        idx / tilemap.dimensions().x,
+                                        0,
+                                    ),
+                                    Srgba::new(0.0, 1.0, 0.0, 0.7),
+                                );
+                            } else if idx != s.sprite.unwrap() as u32 {
+                                tint_tile(
+                                    tilemap,
+                                    &Point3::new(
+                                        idx % tilemap.dimensions().x,
+                                        idx / tilemap.dimensions().x,
+                                        0,
+                                    ),
+                                    Srgba::new(1.0, 1.0, 1.0, 1.),
+                                );
+                            }
+                        }
                     }
                 }
             }
