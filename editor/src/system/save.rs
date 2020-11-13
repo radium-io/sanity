@@ -74,7 +74,7 @@ impl<'s> System<'s> for SaveSystem {
                 if input.key_is_down(winit::VirtualKeyCode::S) && !self.saving {
                     let s =
                         ron::ser::to_string_pretty(&p, ron::ser::PrettyConfig::default()).unwrap();
-                    std::fs::write("assets//asdf.pairs.ron", s);
+                    std::fs::write("temp//pairs.ron", s).unwrap();
                 }
 
                 self.pairs = Some(p);

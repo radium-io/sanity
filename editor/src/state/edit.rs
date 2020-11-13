@@ -81,7 +81,7 @@ impl SimpleState for EditState {
         let pairs = {
             let loader = world.read_resource::<Loader>();
             loader.load(
-                "asdf.pairs.ron",
+                "Dungeon_Tileset.pairs.ron",
                 RonFormat,
                 &mut self.progress_counter,
                 &world.read_resource::<AssetStorage<sanity_lib::assets::Pairs>>(),

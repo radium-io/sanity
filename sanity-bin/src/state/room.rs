@@ -1,3 +1,5 @@
+use std::fmt::Debug;
+
 use amethyst::{
     assets::{AssetStorage, Handle, Loader, ProgressCounter, RonFormat},
     core::{math::Point3, math::Vector3, Named, Transform},
@@ -16,6 +18,7 @@ use amethyst::{
     winit,
 };
 use amethyst_utils::ortho_camera::{CameraNormalizeMode, CameraOrtho, CameraOrthoWorldCoordinates};
+use direction::CardinalDirectionTable;
 use rand::prelude::*;
 use sanity_lib::tile::RoomTile;
 
@@ -43,6 +46,16 @@ fn load_sprite_sheet(world: &World, png_path: &str, ron_path: &str) -> Handle<Sp
 
 use wfc::*;
 
+struct ForbidCorner {}
+impl ForbidPattern for ForbidCorner {
+    fn forbid<W: Wrap, R: Rng>(&mut self, fi: &mut ForbidInterface<W>, rng: &mut R) {
+        fi.forbid_all_patterns_except(Coord::new(0, 0), 0, rng);
+        fi.forbid_all_patterns_except(Coord::new(15, 0), 2, rng);
+        fi.forbid_all_patterns_except(Coord::new(0, 15), 48, rng);
+        fi.forbid_all_patterns_except(Coord::new(15, 15), 50, rng);
+    }
+}
+
 fn gen_map(
     map: &mut TileMap<RoomTile>,
     pairs: &sanity_lib::assets::Pairs,
@@ -52,42 +65,104 @@ fn gen_map(
     let mut rng = thread_rng();
 
     let mut v: Vec<PatternDescription> = Vec::new();
-    for _ in 0..38 {
-        let p = PatternDescription::new(
-            std::num::NonZeroU32::new(1),
-            direction::CardinalDirectionTable::default(),
-        );
-        v.push(p);
+
+    let max_tiles = 64;
+
+    for idx in 0..max_tiles {
+        let mut n: Vec<u32> = pairs
+            .ns
+            .clone()
+            .into_iter()
+            .filter(|p| p.1 == idx && p.0 < max_tiles)
+            .map(|p| p.0 as u32)
+            .collect();
+        let mut s: Vec<u32> = pairs
+            .ns
+            .clone()
+            .into_iter()
+            .filter(|p| p.0 == idx && p.1 < max_tiles)
+            .map(|p| p.1 as u32)
+            .collect();
+
+        let mut w: Vec<u32> = pairs
+            .we
+            .clone()
+            .into_iter()
+            .filter(|p| p.1 == idx && p.0 < max_tiles)
+            .map(|p| p.0 as u32)
+            .collect();
+
+        let mut e: Vec<u32> = pairs
+            .we
+            .clone()
+            .into_iter()
+            .filter(|p| p.0 == idx && p.1 < max_tiles)
+            .map(|p| p.1 as u32)
+            .collect();
+
+        let mut wt = std::num::NonZeroU32::new(1);
+
+        if (n.len() > 0 || s.len() > 0) && (w.len() == 0 || e.len() == 0) {
+            w.push(idx as u32);
+            e.push(idx as u32);
+            wt = std::num::NonZeroU32::new(1);
+        }
+
+        if (n.len() == 0 || s.len() == 0) && (w.len() > 0 || e.len() > 0) {
+            n.push(idx as u32);
+            s.push(idx as u32);
+            wt = std::num::NonZeroU32::new(1);
+        }
+
+        if s.len() > 0 || e.len() > 0 || n.len() > 0 || w.len() > 0 {
+            let p = PatternDescription::new(
+                wt,
+                direction::CardinalDirectionTable::new_array([n, e, s, w]),
+            );
+
+            v.push(p);
+        } else {
+            v.push(PatternDescription::new(
+                wt,
+                direction::CardinalDirectionTable::new_array([
+                    vec![idx as u32],
+                    vec![idx as u32],
+                    vec![idx as u32],
+                    vec![idx as u32],
+                ]),
+            ))
+        }
     }
+    /*
+        for p in pairs.ns.clone() {
+            let first = v.get_mut(p.0).unwrap();
+            first
+                .allowed_neighbours
+                .get_mut(direction::CardinalDirection::South)
+                .push(p.1 as u32);
 
-    for p in pairs.ns.clone() {
-        let first = v.get_mut(p.0).unwrap();
-        first
-            .allowed_neighbours
-            .get_mut(direction::CardinalDirection::South)
-            .push(p.1 as u32);
+            let second = v.get_mut(p.1).unwrap();
+            second
+                .allowed_neighbours
+                .get_mut(direction::CardinalDirection::North)
+                .push(p.0 as u32);
+        }
+        for p in pairs.we.clone() {
+            let first = v.get_mut(p.0).unwrap();
+            first
+                .allowed_neighbours
+                .get_mut(direction::CardinalDirection::East)
+                .push(p.1 as u32);
 
-        let second = v.get_mut(p.1).unwrap();
-        second
-            .allowed_neighbours
-            .get_mut(direction::CardinalDirection::North)
-            .push(p.0 as u32);
-    }
-    for p in pairs.we.clone() {
-        let first = v.get_mut(p.0).unwrap();
-        first
-            .allowed_neighbours
-            .get_mut(direction::CardinalDirection::East)
-            .push(p.1 as u32);
-
-        let second = v.get_mut(p.1).unwrap();
-        second
-            .allowed_neighbours
-            .get_mut(direction::CardinalDirection::West)
-            .push(p.0 as u32);
-    }
-
+            let second = v.get_mut(p.1).unwrap();
+            second
+                .allowed_neighbours
+                .get_mut(direction::CardinalDirection::West)
+                .push(p.0 as u32);
+        }
+    */
     let patterns: PatternTable<PatternDescription> = PatternTable::from_vec(v);
+
     let mut context = wfc::Context::new();
     let mut wave = wfc::Wave::new(wfc::Size::try_new(width, height).unwrap());
     let mut stats = wfc::GlobalStats::new(patterns);
@@ -97,7 +172,7 @@ fn gen_map(
         &mut wave,
         &mut stats,
         wfc::wrap::WrapNone,
-        wfc::ForbidNothing,
+        ForbidCorner {},
         &mut rng,
     );
 
@@ -106,10 +181,9 @@ fn gen_map(
     wfc_run.collapse_retrying(wfc::retry::Forever, &mut rng);
 
     wave.grid().map_ref_with_coord(|c, cell| {
-        let mut tile = map
-            .get_mut(&Point3::new(c.x as u32, c.y as u32, 0))
-            .expect(&format!("{:?}", c.x));
-        tile.sprite = Some(cell.chosen_pattern_id().expect("Chosen tile for coord.") as usize)
+        if let Some(mut tile) = map.get_mut(&Point3::new(c.x as u32, c.y as u32, 0)) {
+            tile.sprite = Some(cell.chosen_pattern_id().expect("Chosen tile for coord.") as usize)
+        }
     });
 }
 
@@ -129,15 +203,15 @@ impl SimpleState for RoomState {
 
         let mut ortho = CameraOrtho::normalized(CameraNormalizeMode::Contain);
         ortho.world_coordinates = CameraOrthoWorldCoordinates {
-            left: -width / 3. / 2.,
-            right: width / 3. / 2.,
-            top: -height / 3. / 2.,
-            bottom: height / 3. / 2.,
+            left: -width / 2.,
+            right: width / 2.,
+            top: height / 2.,
+            bottom: -height / 2.,
             ..Default::default()
         };
         world
             .create_entity()
-            .with(Transform::from(Vector3::new(0., 0., 2.)))
+            .with(Transform::from(Vector3::new(0., 0., 1.1)))
             .with(Camera::standard_2d(width, height))
             .with(ortho)
             .named("camera")
