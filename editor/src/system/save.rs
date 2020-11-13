@@ -91,6 +91,8 @@ impl<'s> System<'s> for SaveSystem {
                         ron::ser::to_string_pretty(&p, ron::ser::PrettyConfig::default()).unwrap();
                     let save = application_root_dir()
                         .unwrap()
+                        .parent()
+                        .unwrap()
                         .join("assets")
                         .join(save_path.0.clone());
 

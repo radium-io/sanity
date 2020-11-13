@@ -1,9 +1,0 @@
-Grid((
-    // Width of the texture used by the sprite sheet
-    texture_width: 512,
-    // Height of the texture used by the sprite sheet
-    texture_height: 640,
-    // Specifies the number of columns in the sprite sheet
-    columns: 16,
-    rows: Some(20),
-))

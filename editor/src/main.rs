@@ -52,7 +52,7 @@ fn main() -> amethyst::Result<()> {
         .with(system::SaveSystem::default(), "save_system", &[]);
     // allow args for ron and png
     let args: Vec<String> = std::env::args().collect();
-    let assets_dir = app_root.join("assets");
+    let assets_dir = app_root.parent().unwrap().join("assets");
 
     let mut game = match args.len() {
         4 => Application::build(

@@ -6,6 +6,7 @@ use amethyst::{
     ecs::Component,
     ecs::Entity,
     ecs::HashMapStorage,
+    ecs::NullStorage,
     input::{is_close_requested, is_key_down},
     prelude::*,
     renderer::camera::Camera,
@@ -28,6 +29,12 @@ pub struct EditState {
 
 pub struct SavePath(pub String);
 impl Component for SavePath {
+    type Storage = HashMapStorage<Self>;
+}
+
+#[derive(Default)]
+pub struct Selected(usize);
+impl Component for Selected {
     type Storage = HashMapStorage<Self>;
 }
 

@@ -88,16 +88,6 @@ impl<'s> System<'s> for TileSelectSystem {
 
                                 if input.mouse_button_is_down(winit::MouseButton::Left) {
                                     if !self.left_down {
-                                        if let Some(pos) = self.selected {
-                                            tint_tile(tilemap, &pos, Srgba::new(1., 1., 1., 1.))
-                                        }
-
-                                        tint_tile(
-                                            tilemap,
-                                            &tile_pos,
-                                            Srgba::new(1.0, 0.0, 0.0, 0.7),
-                                        );
-
                                         self.selected = Some(tile_pos);
                                     }
                                     self.left_down = true;
@@ -113,18 +103,8 @@ impl<'s> System<'s> for TileSelectSystem {
 
                                                 if prev.candidates.e.contains(&index) {
                                                     prev.candidates.e.retain(|x| *x != index);
-                                                    tint_tile(
-                                                        tilemap,
-                                                        &tile_pos,
-                                                        Srgba::new(1., 1., 1., 1.),
-                                                    )
                                                 } else {
                                                     prev.candidates.e.push(index);
-                                                    tint_tile(
-                                                        tilemap,
-                                                        &tile_pos,
-                                                        Srgba::new(0.0, 0.0, 1.0, 0.7),
-                                                    )
                                                 }
                                             }
                                         }
@@ -139,18 +119,8 @@ impl<'s> System<'s> for TileSelectSystem {
 
                                                 if prev.candidates.s.contains(&index) {
                                                     prev.candidates.s.retain(|x| *x != index);
-                                                    tint_tile(
-                                                        tilemap,
-                                                        &tile_pos,
-                                                        Srgba::new(1., 1., 1., 1.),
-                                                    )
                                                 } else {
                                                     prev.candidates.s.push(index);
-                                                    tint_tile(
-                                                        tilemap,
-                                                        &tile_pos,
-                                                        Srgba::new(0.0, 1.0, 0.0, 0.7),
-                                                    )
                                                 }
                                             }
                                         }
@@ -167,17 +137,26 @@ impl<'s> System<'s> for TileSelectSystem {
                         if let Some(selected_pos) = self.selected {
                             let s = tilemap.get(&selected_pos).unwrap().clone();
                             let size = tilemap.dimensions();
+                            let sprite = s.sprite.unwrap() as u32;
+
                             for idx in 0..(size.x * size.y) {
                                 let pos = Point3::new(
                                     idx % tilemap.dimensions().x,
                                     idx / tilemap.dimensions().x,
                                     0,
                                 );
-                                if s.candidates.s.contains(&(idx as usize)) {
+
+                                let i = &(idx as usize);
+
+                                if s.candidates.s.contains(i) && s.candidates.e.contains(i) {
+                                    tint_tile(tilemap, &pos, Srgba::new(0.0, 1.0, 1.0, 0.7));
+                                } else if s.candidates.s.contains(i) {
                                     tint_tile(tilemap, &pos, Srgba::new(0.0, 1.0, 0.0, 0.7));
-                                } else if s.candidates.e.contains(&(idx as usize)) {
+                                } else if s.candidates.e.contains(i) {
                                     tint_tile(tilemap, &pos, Srgba::new(0.0, 0.0, 1.0, 0.7));
-                                } else if idx != s.sprite.unwrap() as u32 {
+                                } else if idx == sprite {
+                                    tint_tile(tilemap, &pos, Srgba::new(1.0, 0.0, 0.0, 0.7));
+                                } else {
                                     tint_tile(tilemap, &pos, Srgba::new(1.0, 1.0, 1.0, 1.));
                                 }
                             }

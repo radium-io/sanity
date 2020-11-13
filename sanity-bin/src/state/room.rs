@@ -46,13 +46,16 @@ fn load_sprite_sheet(world: &World, png_path: &str, ron_path: &str) -> Handle<Sp
 
 use wfc::*;
 
-struct ForbidCorner {}
+struct ForbidCorner {
+    width: i32,
+    height: i32,
+}
 impl ForbidPattern for ForbidCorner {
     fn forbid<W: Wrap, R: Rng>(&mut self, fi: &mut ForbidInterface<W>, rng: &mut R) {
-        fi.forbid_all_patterns_except(Coord::new(0, 0), 0, rng);
-        fi.forbid_all_patterns_except(Coord::new(15, 0), 2, rng);
-        fi.forbid_all_patterns_except(Coord::new(0, 15), 48, rng);
-        fi.forbid_all_patterns_except(Coord::new(15, 15), 50, rng);
+        fi.forbid_all_patterns_except(Coord::new(0, 0), 3, rng);
+        fi.forbid_all_patterns_except(Coord::new(self.width - 1, 0), 5, rng);
+        fi.forbid_all_patterns_except(Coord::new(0, self.height - 1), 51, rng);
+        fi.forbid_all_patterns_except(Coord::new(self.width - 1, self.height - 1), 53, rng);
     }
 }
 
@@ -66,7 +69,7 @@ fn gen_map(
 
     let mut v: Vec<PatternDescription> = Vec::new();
 
-    let max_tiles = 58;
+    let max_tiles = 78;
     for idx in 0..max_tiles {
         let mut n: Vec<u32> = pairs
             .ns
@@ -99,7 +102,12 @@ fn gen_map(
             .map(|p| p.1 as u32)
             .collect();
 
-        let mut wt = std::num::NonZeroU32::new(1);
+        let mut wt = std::num::NonZeroU32::new(50);
+
+        if idx == 6 {
+            // FIXME: floor weighting
+            wt = std::num::NonZeroU32::new(3000);
+        }
 
         if (n.len() > 0 || s.len() > 0) && (w.len() == 0 || e.len() == 0) {
             w.push(idx as u32);
@@ -132,34 +140,7 @@ fn gen_map(
             ))
         }
     }
-    /*
-        for p in pairs.ns.clone() {
-            let first = v.get_mut(p.0).unwrap();
-            first
-                .allowed_neighbours
-                .get_mut(direction::CardinalDirection::South)
-                .push(p.1 as u32);
 
-            let second = v.get_mut(p.1).unwrap();
-            second
-                .allowed_neighbours
-                .get_mut(direction::CardinalDirection::North)
-                .push(p.0 as u32);
-        }
-        for p in pairs.we.clone() {
-            let first = v.get_mut(p.0).unwrap();
-            first
-                .allowed_neighbours
-                .get_mut(direction::CardinalDirection::East)
-                .push(p.1 as u32);
-
-            let second = v.get_mut(p.1).unwrap();
-            second
-                .allowed_neighbours
-                .get_mut(direction::CardinalDirection::West)
-                .push(p.0 as u32);
-        }
-    */
     let patterns: PatternTable<PatternDescription> = PatternTable::from_vec(v);
 
     let mut context = wfc::Context::new();
@@ -171,7 +152,10 @@ fn gen_map(
         &mut wave,
         &mut stats,
         wfc::wrap::WrapNone,
-        ForbidCorner {},
+        ForbidCorner {
+            width: width as i32,
+            height: height as i32,
+        },
         &mut rng,
     );
 
@@ -181,7 +165,10 @@ fn gen_map(
 
     wave.grid().map_ref_with_coord(|c, cell| {
         if let Some(mut tile) = map.get_mut(&Point3::new(c.x as u32, c.y as u32, 0)) {
-            tile.sprite = Some(cell.chosen_pattern_id().expect("Chosen tile for coord.") as usize)
+            tile.sprite = Some(
+                cell.chosen_pattern_id()
+                    .expect(&format!("Chosen tile for coord {:?}.", cell)) as usize,
+            )
         }
     });
 }
