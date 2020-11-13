@@ -69,7 +69,7 @@ fn gen_map(
 
     let mut v: Vec<PatternDescription> = Vec::new();
 
-    let max_tiles = 78;
+    let max_tiles = 115;
     for idx in 0..max_tiles {
         let mut n: Vec<u32> = pairs
             .ns
@@ -106,7 +106,7 @@ fn gen_map(
 
         if idx == 6 {
             // FIXME: floor weighting
-            wt = std::num::NonZeroU32::new(3000);
+            wt = std::num::NonZeroU32::new(100);
         }
 
         if (n.len() > 0 || s.len() > 0) && (w.len() == 0 || e.len() == 0) {
@@ -207,7 +207,7 @@ impl SimpleState for RoomState {
             load_sprite_sheet(&world, "Dungeon_Tileset.png", "Dungeon_Tileset.ron");
 
         let map = TileMap::<RoomTile>::new(
-            Vector3::new(16, 16, 1), // The dimensions of the map
+            Vector3::new(48, 32, 1), // The dimensions of the map
             Vector3::new(32, 32, 1), // The dimensions of each tile
             Some(spritesheet_handle),
         );
@@ -247,7 +247,7 @@ impl SimpleState for RoomState {
                     Read<'_, AssetStorage<sanity_lib::assets::Pairs>>,
                 )| {
                     for (map, pair) in (&mut maps, &pairs).join() {
-                        gen_map(map, assets.get(pair).unwrap(), 16, 16);
+                        gen_map(map, assets.get(pair).unwrap(), 48, 32);
                     }
                 },
             );
@@ -276,7 +276,7 @@ impl SimpleState for RoomState {
                         Read<'_, AssetStorage<sanity_lib::assets::Pairs>>,
                     )| {
                         for (map, pair) in (&mut maps, &pairs).join() {
-                            gen_map(map, assets.get(pair).unwrap(), 16, 16);
+                            gen_map(map, assets.get(pair).unwrap(), 48, 32);
                         }
                     },
                 );
