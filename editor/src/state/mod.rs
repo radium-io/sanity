@@ -12,6 +12,7 @@ mod edit;
 mod load;
 
 pub use edit::EditState;
+pub use edit::SavePath;
 pub use load::LoadState;
 
 pub fn load_sprite_sheet<P>(

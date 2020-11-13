@@ -3,7 +3,9 @@ use amethyst::{
     core::math::Point3,
     core::math::Vector3,
     core::Transform,
+    ecs::Component,
     ecs::Entity,
+    ecs::HashMapStorage,
     input::{is_close_requested, is_key_down},
     prelude::*,
     renderer::camera::Camera,
@@ -20,7 +22,13 @@ pub struct EditState {
     pub progress_counter: ProgressCounter,
     pub png: String,
     pub ron: String,
+    pub pairs: String,
     pub map: Option<Entity>,
+}
+
+pub struct SavePath(pub String);
+impl Component for SavePath {
+    type Storage = HashMapStorage<Self>;
 }
 
 impl SimpleState for EditState {
@@ -81,17 +89,20 @@ impl SimpleState for EditState {
         let pairs = {
             let loader = world.read_resource::<Loader>();
             loader.load(
-                "Dungeon_Tileset.pairs.ron",
+                self.pairs.clone(),
                 RonFormat,
                 &mut self.progress_counter,
                 &world.read_resource::<AssetStorage<sanity_lib::assets::Pairs>>(),
             )
         };
 
+        let save_path = SavePath(self.pairs.clone());
+
         world
             .create_entity()
             .with(map)
             .with(pairs)
+            .with(save_path)
             .with(Transform::default())
             .build();
     }

@@ -66,8 +66,7 @@ fn gen_map(
 
     let mut v: Vec<PatternDescription> = Vec::new();
 
-    let max_tiles = 64;
-
+    let max_tiles = 58;
     for idx in 0..max_tiles {
         let mut n: Vec<u32> = pairs
             .ns
@@ -115,13 +114,13 @@ fn gen_map(
         }
 
         if s.len() > 0 || e.len() > 0 || n.len() > 0 || w.len() > 0 {
-            let p = PatternDescription::new(
+            println!("{:?} has pattern", idx);
+            v.push(PatternDescription::new(
                 wt,
                 direction::CardinalDirectionTable::new_array([n, e, s, w]),
-            );
-
-            v.push(p);
+            ));
         } else {
+            println!("{:?} has no pattern", idx);
             v.push(PatternDescription::new(
                 wt,
                 direction::CardinalDirectionTable::new_array([

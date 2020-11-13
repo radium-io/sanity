@@ -104,7 +104,33 @@ impl<'s> System<'s> for TileSelectSystem {
                                 } else {
                                     self.left_down = false;
 
-                                    if input.mouse_button_is_down(winit::MouseButton::Right) {
+                                    if input.action_is_down("east").unwrap_or(false) {
+                                        if !self.right_down {
+                                            let index = tile_pos.x as usize
+                                                + (tile_pos.y * tilemap.dimensions().x) as usize;
+                                            if let Some(selected_pos) = self.selected {
+                                                let prev = tilemap.get_mut(&selected_pos).unwrap();
+
+                                                if prev.candidates.e.contains(&index) {
+                                                    prev.candidates.e.retain(|x| *x != index);
+                                                    tint_tile(
+                                                        tilemap,
+                                                        &tile_pos,
+                                                        Srgba::new(1., 1., 1., 1.),
+                                                    )
+                                                } else {
+                                                    prev.candidates.e.push(index);
+                                                    tint_tile(
+                                                        tilemap,
+                                                        &tile_pos,
+                                                        Srgba::new(0.0, 0.0, 1.0, 0.7),
+                                                    )
+                                                }
+                                            }
+                                        }
+                                        self.right_down = true;
+                                    } else if input.mouse_button_is_down(winit::MouseButton::Right)
+                                    {
                                         if !self.right_down {
                                             let index = tile_pos.x as usize
                                                 + (tile_pos.y * tilemap.dimensions().x) as usize;
@@ -149,6 +175,8 @@ impl<'s> System<'s> for TileSelectSystem {
                                 );
                                 if s.candidates.s.contains(&(idx as usize)) {
                                     tint_tile(tilemap, &pos, Srgba::new(0.0, 1.0, 0.0, 0.7));
+                                } else if s.candidates.e.contains(&(idx as usize)) {
+                                    tint_tile(tilemap, &pos, Srgba::new(0.0, 0.0, 1.0, 0.7));
                                 } else if idx != s.sprite.unwrap() as u32 {
                                     tint_tile(tilemap, &pos, Srgba::new(1.0, 1.0, 1.0, 1.));
                                 }

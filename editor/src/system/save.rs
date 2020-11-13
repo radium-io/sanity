@@ -12,6 +12,7 @@ use amethyst::{
     winit,
 };
 use amethyst::{ecs::SystemData, tiles::MapStorage};
+use amethyst_utils::application_root_dir;
 use sanity_lib::{assets::Pairs, tile::RoomTile};
 
 #[derive(SystemDesc, Default)]
@@ -27,10 +28,14 @@ impl<'s> System<'s> for SaveSystem {
         ReadStorage<'s, sanity_lib::assets::PairsHandle>,
         Read<'s, InputHandler<StringBindings>>,
         Read<'s, AssetStorage<sanity_lib::assets::Pairs>>,
+        ReadStorage<'s, crate::state::SavePath>,
     );
 
-    fn run(&mut self, (mut tilemaps, pairs_handles, input, pairs_storage): Self::SystemData) {
-        for (tilemap, pairs) in (&mut tilemaps, &pairs_handles).join() {
+    fn run(
+        &mut self,
+        (mut tilemaps, pairs_handles, input, pairs_storage, save_paths): Self::SystemData,
+    ) {
+        for (tilemap, pairs, save_path) in (&mut tilemaps, &pairs_handles, &save_paths).join() {
             let dim = tilemap.dimensions().clone();
 
             if self.pairs.is_none() && pairs_storage.get(pairs).is_some() {
@@ -45,6 +50,16 @@ impl<'s> System<'s> for SaveSystem {
                                 .clone()
                                 .unwrap()
                                 .ns
+                                .into_iter()
+                                .filter(|p| p.0 == t.sprite.unwrap())
+                                .map(|p| p.1)
+                                .collect();
+
+                            t.candidates.e = self
+                                .pairs
+                                .clone()
+                                .unwrap()
+                                .we
                                 .into_iter()
                                 .filter(|p| p.0 == t.sprite.unwrap())
                                 .map(|p| p.1)
@@ -74,7 +89,12 @@ impl<'s> System<'s> for SaveSystem {
                 if input.key_is_down(winit::VirtualKeyCode::S) && !self.saving {
                     let s =
                         ron::ser::to_string_pretty(&p, ron::ser::PrettyConfig::default()).unwrap();
-                    std::fs::write("temp//pairs.ron", s).unwrap();
+                    let save = application_root_dir()
+                        .unwrap()
+                        .join("assets")
+                        .join(save_path.0.clone());
+
+                    let file = std::fs::write(save, s).unwrap();
                 }
 
                 self.pairs = Some(p);

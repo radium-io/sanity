@@ -23,12 +23,15 @@ fn main() -> amethyst::Result<()> {
     amethyst::start_logger(Default::default());
 
     let app_root = application_root_dir()?;
+    let bindings_config = app_root.join("config").join("input.ron");
 
     let game_data = GameDataBuilder::default()
         .with(CameraOrthoSystem::default(), "ortho_camera_system", &[])
         .with_bundle(TransformBundle::new())?
         .with_bundle(HotReloadBundle::new(HotReloadStrategy::every(2)))?
-        .with_bundle(InputBundle::<StringBindings>::new())?
+        .with_bundle(
+            InputBundle::<StringBindings>::new().with_bindings_from_file(bindings_config)?,
+        )?
         .with_bundle(UiBundle::<StringBindings>::new())?
         .with(Processor::<sanity_lib::assets::Pairs>::new(), "", &[])
         .with_bundle(
@@ -52,11 +55,12 @@ fn main() -> amethyst::Result<()> {
     let assets_dir = app_root.join("assets");
 
     let mut game = match args.len() {
-        3 => Application::build(
+        4 => Application::build(
             assets_dir,
             crate::state::EditState {
                 png: args[1].parse().unwrap(),
                 ron: args[2].parse().unwrap(),
+                pairs: args[3].parse().unwrap(),
                 ..Default::default()
             },
         )?

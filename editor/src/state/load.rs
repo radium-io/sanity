@@ -133,6 +133,7 @@ impl SimpleState for LoadState {
                         self.png_path = file_path
                     }
                 }
+
                 if Some(target) == self.ron_button {
                     let result = nfd::open_file_dialog(Some("ron"), None).unwrap();
                     if let Response::Okay(file_path) = result {
