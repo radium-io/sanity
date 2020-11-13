@@ -11,6 +11,7 @@ use amethyst::{
     prelude::*,
     renderer::camera::Camera,
     tiles::{MapStorage, TileMap},
+    ui::UiCreator,
     utils::ortho_camera::{CameraNormalizeMode, CameraOrtho},
     window::ScreenDimensions,
     winit,
@@ -32,6 +33,7 @@ impl Component for SavePath {
     type Storage = HashMapStorage<Self>;
 }
 
+#[derive(Debug)]
 pub struct Selected(pub Option<Point3<u32>>);
 impl Component for Selected {
     type Storage = HashMapStorage<Self>;
@@ -111,6 +113,10 @@ impl SimpleState for EditState {
             .with(save_path)
             .with(Transform::default())
             .build();
+
+        world.exec(|mut creator: UiCreator<'_>| {
+            creator.create("ui/list.ron", ());
+        });
     }
 
     fn update(&mut self, _data: &mut StateData<'_, GameData<'_, '_>>) -> SimpleTrans {

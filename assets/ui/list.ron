@@ -3,9 +3,10 @@ Label(
     transform: (
         id: "south_list",
         anchor: TopLeft,
+        pivot: TopLeft,
         x: 100.,
         y: -25.,
-        width: 200.,
+        width: 500.,
         height: 50.,
         opaque: false,
     ),

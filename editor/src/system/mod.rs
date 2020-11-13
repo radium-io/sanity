@@ -4,4 +4,4 @@ mod ui;
 
 pub use save::SaveSystem;
 pub use tile::TileSelectSystem;
-pub use ui::ExampleSystem;
+pub use ui::UISystem;

@@ -49,6 +49,7 @@ fn main() -> amethyst::Result<()> {
             "tile_select_system",
             &["input_system"],
         )
+        .with(system::UISystem::default(), "ui_system", &[])
         .with(system::SaveSystem::default(), "save_system", &[]);
     // allow args for ron and png
     let args: Vec<String> = std::env::args().collect();

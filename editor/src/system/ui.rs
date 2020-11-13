@@ -6,19 +6,20 @@ use amethyst::{
         prelude::{Entity, Read, System, SystemData, WriteStorage},
         ReadStorage,
     },
-    tiles::TileMap,
+    tiles::Map,
+    tiles::{MapStorage, TileMap},
     ui::{UiFinder, UiText},
     utils::fps_counter::FpsCounter,
 };
 use sanity_lib::tile::RoomTile;
 
 #[derive(Default, SystemDesc)]
-pub struct ExampleSystem {
+pub struct UISystem {
     south_list: Option<Entity>,
     east_list: Option<Entity>,
 }
 
-impl<'a> System<'a> for ExampleSystem {
+impl<'a> System<'a> for UISystem {
     type SystemData = (
         WriteStorage<'a, UiText>,
         UiFinder<'a>,
@@ -30,15 +31,19 @@ impl<'a> System<'a> for ExampleSystem {
         let (mut ui_text, finder, tilemaps, selected) = data;
 
         if self.south_list.is_none() {
-            if let Some(e) = finder.find("south_list") {
-                self.south_list = Some(e);
-            }
+            self.south_list = finder.find("south_list");
         }
 
-        for (_, s) in (&tilemaps, &selected).join() {
+        for (t, s) in (&tilemaps, &selected).join() {
             if let Some(e) = self.south_list {
                 if let Some(ui) = ui_text.get_mut(e) {
-                    ui.text = format!("{:?}", s.0);
+                    if let Some(p) = s.0 {
+                        ui.text = format!(
+                            "{:?} \r\n {:?}",
+                            p.x + p.y * t.dimensions().x,
+                            t.get(&p).map(|t| t.candidates.s.clone())
+                        );
+                    }
                 }
             }
         }
