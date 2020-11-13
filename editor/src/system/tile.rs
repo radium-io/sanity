@@ -20,10 +20,10 @@ use amethyst::{
 use amethyst::{ecs::SystemData, tiles::MapStorage};
 use sanity_lib::tile::RoomTile;
 
+use crate::state::edit::Selected;
+
 #[derive(SystemDesc, Default)]
 pub struct TileSelectSystem {
-    hover: Option<Point3<u32>>,
-    selected: Option<Point3<u32>>,
     left_down: bool,
     right_down: bool,
 }
@@ -44,6 +44,7 @@ impl<'s> System<'s> for TileSelectSystem {
         ReadExpect<'s, ScreenDimensions>,
         Read<'s, ActiveCamera>,
         Read<'s, InputHandler<StringBindings>>,
+        WriteStorage<'s, crate::state::edit::Selected>,
     );
 
     fn run(
@@ -56,6 +57,7 @@ impl<'s> System<'s> for TileSelectSystem {
             screen_dimensions,
             active_camera,
             input,
+            mut selected,
         ): Self::SystemData,
     ) {
         // Gets mouse coordinates
@@ -78,34 +80,35 @@ impl<'s> System<'s> for TileSelectSystem {
                     let mouse_world_position = ray.at_distance(distance);
 
                     // Find any sprites which the mouse is currently inside
-                    for (tilemap, _) in (&mut tilemaps, &transforms).join() {
+                    for (entity, tilemap) in (&entities, &mut tilemaps).join() {
                         match tilemap.to_tile(
                             &Vector3::new(mouse_world_position.x, mouse_world_position.y, 0.),
                             None,
                         ) {
                             Ok(tile_pos) => {
-                                self.hover = Some(tile_pos);
-
                                 if input.mouse_button_is_down(winit::MouseButton::Left) {
                                     if !self.left_down {
-                                        self.selected = Some(tile_pos);
+                                        selected.insert(
+                                            entity,
+                                            crate::state::edit::Selected(Some(tile_pos)),
+                                        );
                                     }
                                     self.left_down = true;
-                                } else {
+                                } else if let Some(Selected(Some(selected_pos))) =
+                                    selected.get(entity)
+                                {
                                     self.left_down = false;
 
                                     if input.action_is_down("east").unwrap_or(false) {
                                         if !self.right_down {
                                             let index = tile_pos.x as usize
                                                 + (tile_pos.y * tilemap.dimensions().x) as usize;
-                                            if let Some(selected_pos) = self.selected {
-                                                let prev = tilemap.get_mut(&selected_pos).unwrap();
+                                            let prev = tilemap.get_mut(&selected_pos).unwrap();
 
-                                                if prev.candidates.e.contains(&index) {
-                                                    prev.candidates.e.retain(|x| *x != index);
-                                                } else {
-                                                    prev.candidates.e.push(index);
-                                                }
+                                            if prev.candidates.e.contains(&index) {
+                                                prev.candidates.e.retain(|x| *x != index);
+                                            } else {
+                                                prev.candidates.e.push(index);
                                             }
                                         }
                                         self.right_down = true;
@@ -114,16 +117,15 @@ impl<'s> System<'s> for TileSelectSystem {
                                         if !self.right_down {
                                             let index = tile_pos.x as usize
                                                 + (tile_pos.y * tilemap.dimensions().x) as usize;
-                                            if let Some(selected_pos) = self.selected {
-                                                let prev = tilemap.get_mut(&selected_pos).unwrap();
+                                            let prev = tilemap.get_mut(&selected_pos).unwrap();
 
-                                                if prev.candidates.s.contains(&index) {
-                                                    prev.candidates.s.retain(|x| *x != index);
-                                                } else {
-                                                    prev.candidates.s.push(index);
-                                                }
+                                            if prev.candidates.s.contains(&index) {
+                                                prev.candidates.s.retain(|x| *x != index);
+                                            } else {
+                                                prev.candidates.s.push(index);
                                             }
                                         }
+
                                         self.right_down = true;
                                     } else {
                                         self.right_down = false;
@@ -134,7 +136,7 @@ impl<'s> System<'s> for TileSelectSystem {
                         }
 
                         // tint all tiles that are candidates (so selecting new tile will show candidates)
-                        if let Some(selected_pos) = self.selected {
+                        if let Some(Selected(Some(selected_pos))) = selected.get(entity) {
                             let s = tilemap.get(&selected_pos).unwrap().clone();
                             let size = tilemap.dimensions();
                             let sprite = s.sprite.unwrap() as u32;

@@ -8,7 +8,7 @@ use amethyst::{
     },
 };
 
-mod edit;
+pub mod edit;
 mod load;
 
 pub use edit::EditState;

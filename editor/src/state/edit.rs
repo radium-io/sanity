@@ -32,8 +32,7 @@ impl Component for SavePath {
     type Storage = HashMapStorage<Self>;
 }
 
-#[derive(Default)]
-pub struct Selected(usize);
+pub struct Selected(pub Option<Point3<u32>>);
 impl Component for Selected {
     type Storage = HashMapStorage<Self>;
 }

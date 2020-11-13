@@ -1,6 +1,7 @@
 use amethyst::{
     core::timing::Time,
     derive::SystemDesc,
+    ecs::Join,
     ecs::{
         prelude::{Entity, Read, System, SystemData, WriteStorage},
         ReadStorage,
@@ -22,10 +23,11 @@ impl<'a> System<'a> for ExampleSystem {
         WriteStorage<'a, UiText>,
         UiFinder<'a>,
         ReadStorage<'a, TileMap<RoomTile>>,
+        ReadStorage<'a, crate::state::edit::Selected>,
     );
 
     fn run(&mut self, data: Self::SystemData) {
-        let (mut ui_text, finder, tilemaps) = data;
+        let (mut ui_text, finder, tilemaps, selected) = data;
 
         if self.south_list.is_none() {
             if let Some(e) = finder.find("south_list") {
@@ -33,9 +35,11 @@ impl<'a> System<'a> for ExampleSystem {
             }
         }
 
-        if let Some(e) = self.south_list {
-            if let Some(ui) = ui_text.get_mut(e) {
-                ui.text = tilemaps.get()
+        for (_, s) in (&tilemaps, &selected).join() {
+            if let Some(e) = self.south_list {
+                if let Some(ui) = ui_text.get_mut(e) {
+                    ui.text = format!("{:?}", s.0);
+                }
             }
         }
     }
