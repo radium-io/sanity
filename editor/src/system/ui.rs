@@ -39,9 +39,10 @@ impl<'a> System<'a> for UISystem {
                 if let Some(ui) = ui_text.get_mut(e) {
                     if let Some(p) = s.0 {
                         ui.text = format!(
-                            "{:?} \r\n {:?}",
+                            "{:?} \n south:{:?} \n east:{:?}",
                             p.x + p.y * t.dimensions().x,
-                            t.get(&p).map(|t| t.candidates.s.clone())
+                            t.get(&p).map(|t| t.candidates.s.clone()).unwrap_or(vec![]),
+                            t.get(&p).map(|t| t.candidates.e.clone()).unwrap_or(vec![]),
                         );
                     }
                 }
