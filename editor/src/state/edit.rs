@@ -1,5 +1,5 @@
 use amethyst::{
-    assets::{Handle, ProgressCounter},
+    assets::{AssetStorage, Handle, Loader, ProgressCounter, RonFormat},
     core::math::Point3,
     core::math::Vector3,
     core::Transform,
@@ -78,9 +78,20 @@ impl SimpleState for EditState {
             x = 0;
         }
 
+        let pairs = {
+            let loader = world.read_resource::<Loader>();
+            loader.load(
+                "asdf.pairs.ron",
+                RonFormat,
+                &mut self.progress_counter,
+                &world.read_resource::<AssetStorage<sanity_lib::assets::Pairs>>(),
+            )
+        };
+
         world
             .create_entity()
             .with(map)
+            .with(pairs)
             .with(Transform::default())
             .build();
     }
