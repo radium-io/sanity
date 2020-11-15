@@ -6,12 +6,16 @@ use amethyst::{
     ecs::Join,
     input::{is_close_requested, is_key_down},
     prelude::*,
+    renderer::palette,
+    renderer::SpriteRender,
+    renderer::Transparent,
     renderer::{
         camera::Camera,
         formats::texture::ImageFormat,
         sprite::{SpriteSheet, SpriteSheetFormat},
         Texture,
     },
+    tiles::Map,
     tiles::{MapStorage, TileMap},
     ui::UiCreator,
     window::ScreenDimensions,
@@ -20,6 +24,7 @@ use amethyst::{
 use amethyst_utils::ortho_camera::{CameraNormalizeMode, CameraOrtho, CameraOrthoWorldCoordinates};
 use direction::CardinalDirectionTable;
 use rand::prelude::*;
+use sanity_lib::map::SanityMap;
 use sanity_lib::tile::RoomTile;
 
 #[derive(Debug, Default)]
@@ -52,12 +57,22 @@ struct ForbidCorner {
 }
 impl ForbidPattern for ForbidCorner {
     fn forbid<W: Wrap, R: Rng>(&mut self, fi: &mut ForbidInterface<W>, rng: &mut R) {
-        fi.forbid_all_patterns_except(Coord::new(0, 0), 3, rng);
-        fi.forbid_all_patterns_except(Coord::new(self.width - 1, 0), 5, rng);
-        fi.forbid_all_patterns_except(Coord::new(0, self.height - 1), 51, rng);
-        fi.forbid_all_patterns_except(Coord::new(self.width - 1, self.height - 1), 53, rng);
+        for x in 0..self.width {
+            fi.forbid_all_patterns_except(Coord::new(x, 0), 17, rng);
+            fi.forbid_all_patterns_except(Coord::new(x, self.height - 1), 17, rng);
+        }
+
+        for y in 0..self.height {
+            fi.forbid_all_patterns_except(Coord::new(0, y), 17, rng);
+            fi.forbid_all_patterns_except(Coord::new(self.width - 1, y), 17, rng);
+        }
+
+        // TODO: place entrances and exits and some path between them
+        fi.forbid_all_patterns_except(Coord::new(self.width / 2, self.height / 2), 6, rng);
     }
 }
+
+use bracket_pathfinding::prelude::*;
 
 fn gen_map(
     map: &mut TileMap<RoomTile>,
@@ -163,14 +178,51 @@ fn gen_map(
 
     wfc_run.collapse_retrying(wfc::retry::Forever, &mut rng);
 
-    wave.grid().map_ref_with_coord(|c, cell| {
+    let grid = wave.grid().map_ref_with_coord(|c, cell| {
         if let Some(mut tile) = map.get_mut(&Point3::new(c.x as u32, c.y as u32, 0)) {
-            tile.sprite = Some(
+            let s = Some(
                 cell.chosen_pattern_id()
                     .expect(&format!("Chosen tile for coord {:?}.", cell)) as usize,
-            )
+            );
+            tile.sprite = s;
+            if (s == Some(6) || s == Some(36)) {
+                tile.walkable = true;
+            } else {
+                tile.walkable = false;
+            }
+            s
+        } else {
+            None
         }
     });
+
+    let start = Point {
+        x: width as i32 / 2,
+        y: height as i32 / 2,
+    };
+    let clone = map.clone();
+    let my_map = SanityMap(&clone);
+    let dijkstra = DijkstraMap::new(
+        width,
+        height,
+        &[my_map.point2d_to_index(start)],
+        &my_map,
+        1000.,
+    );
+
+    for x in 0..width {
+        for y in 0..height {
+            let p = Point::new(x, y);
+            if let Some(tile) = map.get_mut(&Point3::new(x, y, 0)) {
+                if tile.walkable {
+                    if dijkstra.map[my_map.point2d_to_index(p)] == std::f32::MAX {
+                        tile.sprite = Some(17);
+                        tile.walkable = false;
+                    }
+                }
+            }
+        }
+    }
 }
 
 use amethyst::ecs::prelude::*;
@@ -212,6 +264,19 @@ impl SimpleState for RoomState {
             Some(spritesheet_handle),
         );
 
+        let sprite_sheet =
+            load_sprite_sheet(&world, "sprites/Space Cadet.png", "sprites/Space Cadet.ron");
+        world
+            .create_entity()
+            .with(Transform::default())
+            .with(SpriteRender::new(sprite_sheet.clone(), 1))
+            .with(Transparent)
+            .with(sanity_lib::player::Player::new(
+                map.dimensions().x / 2,
+                map.dimensions().y / 2,
+            ))
+            .build();
+
         // load the tile pairs for this tileset
         let pairs = {
             let loader = world.read_resource::<Loader>();
@@ -223,12 +288,11 @@ impl SimpleState for RoomState {
             )
         };
 
-        let t = Transform::default();
         world
             .create_entity()
             .with(map)
             .with(pairs)
-            .with(t)
+            .with(Transform::default())
             .named("map")
             .build();
 

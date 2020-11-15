@@ -17,6 +17,7 @@ pub struct RoomTile {
     pub sprite: Option<TileSetIndex>,
     pub tint: palette::Srgba,
     pub candidates: Candidates,
+    pub walkable: bool,
 }
 
 impl Default for RoomTile {
@@ -25,6 +26,7 @@ impl Default for RoomTile {
             sprite: None,
             tint: palette::Srgba::new(1., 1., 1., 1.),
             candidates: Candidates::default(),
+            walkable: false,
         }
     }
 }

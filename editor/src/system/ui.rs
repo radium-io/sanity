@@ -1,15 +1,13 @@
 use amethyst::{
-    core::timing::Time,
     derive::SystemDesc,
     ecs::Join,
     ecs::{
-        prelude::{Entity, Read, System, SystemData, WriteStorage},
+        prelude::{Entity, System, SystemData, WriteStorage},
         ReadStorage,
     },
     tiles::Map,
     tiles::{MapStorage, TileMap},
     ui::{UiFinder, UiText},
-    utils::fps_counter::FpsCounter,
 };
 use sanity_lib::tile::RoomTile;
 

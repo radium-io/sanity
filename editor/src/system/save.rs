@@ -1,5 +1,3 @@
-use std::fmt::Debug;
-
 use amethyst::{
     assets::AssetStorage,
     core::math::Point3,
@@ -7,7 +5,6 @@ use amethyst::{
     ecs::{Join, Read, ReadStorage, System, WriteStorage},
     input::InputHandler,
     input::StringBindings,
-    tiles::MortonEncoder2D,
     tiles::{Map, TileMap},
     winit,
 };

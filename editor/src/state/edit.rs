@@ -6,7 +6,6 @@ use amethyst::{
     ecs::Component,
     ecs::Entity,
     ecs::HashMapStorage,
-    ecs::NullStorage,
     input::{is_close_requested, is_key_down},
     prelude::*,
     renderer::camera::Camera,

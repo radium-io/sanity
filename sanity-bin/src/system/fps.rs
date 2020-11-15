@@ -7,11 +7,11 @@ use amethyst::{
 };
 
 #[derive(Default, SystemDesc)]
-pub struct ExampleSystem {
+pub struct FPSSystem {
     fps_display: Option<Entity>,
 }
 
-impl<'a> System<'a> for ExampleSystem {
+impl<'a> System<'a> for FPSSystem {
     type SystemData = (
         Read<'a, Time>,
         WriteStorage<'a, UiText>,
