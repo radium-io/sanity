@@ -21,6 +21,7 @@ strum = "0.19.5"
 strum_macros = "0.19.4"
 wfc = "0.9.2"
 bracket-pathfinding = "0.8.1"
+amethyst_error = "0.15.3"
 
 [features]
 default = ["vulkan"]

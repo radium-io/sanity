@@ -3420,6 +3420,7 @@ name = "sanity"
 version = "0.1.0"
 dependencies = [
  "amethyst",
+ "amethyst_error",
  "amethyst_utils",
  "bracket-pathfinding",
  "direction",

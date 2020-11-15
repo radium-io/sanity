@@ -249,18 +249,21 @@ impl SimpleState for RoomState {
         };
 
         let mut ortho = CameraOrtho::normalized(CameraNormalizeMode::Contain);
+        let std = Camera::standard_2d(width, height);
         ortho.world_coordinates = CameraOrthoWorldCoordinates {
             left: -width / 2.,
             right: width / 2.,
             top: height / 2.,
             bottom: -height / 2.,
-            ..Default::default()
+            near: 0.125,
+            far: 2000.,
         };
+
         world
             .create_entity()
-            .with(Transform::from(Vector3::new(0., 0., 100.)))
-            .with(Camera::standard_2d(width, height))
-            .with(ortho)
+            .with(Transform::from(Vector3::new(0., 0., 1000.)))
+            .with(std)
+            //.with(ortho)
             .named("camera")
             .build();
 
@@ -276,11 +279,11 @@ impl SimpleState for RoomState {
         let sprite_sheet =
             load_sprite_sheet(&world, "sprites/Space Cadet.png", "sprites/Space Cadet.ron");
         let mut t = Transform::default();
-        t.move_backward(4.);
+        t.move_backward(500.);
         t.move_up(8.);
         world
             .create_entity()
-            .with(SpriteRender::new(sprite_sheet.clone(), 1))
+            .with(SpriteRender::new(sprite_sheet.clone(), 0))
             .with(Transparent)
             .with(t)
             .with(sanity_lib::player::Player::new(
@@ -300,12 +303,13 @@ impl SimpleState for RoomState {
             )
         };
 
+        let mut c_t = Transform::default();
+        c_t.move_forward(5.);
         world
             .create_entity()
             .with(map)
             .with(pairs)
-            .with(Transform::default())
-            .named("map")
+            .with(c_t)
             .build();
 
         // FIXME: move to global state?
