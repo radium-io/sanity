@@ -185,7 +185,16 @@ fn gen_map(
                     .expect(&format!("Chosen tile for coord {:?}.", cell)) as usize,
             );
             tile.sprite = s;
-            if (s == Some(6) || s == Some(36)) {
+            if s == Some(6)
+                || s == Some(36)
+                || s == Some(97)
+                || s == Some(98)
+                || s == Some(0)
+                || s == Some(1)
+                || s == Some(2)
+                || s == Some(81)
+                || s == Some(82)
+            {
                 tile.walkable = true;
             } else {
                 tile.walkable = false;
@@ -249,7 +258,7 @@ impl SimpleState for RoomState {
         };
         world
             .create_entity()
-            .with(Transform::from(Vector3::new(0., 0., 1.1)))
+            .with(Transform::from(Vector3::new(0., 0., 100.)))
             .with(Camera::standard_2d(width, height))
             .with(ortho)
             .named("camera")
@@ -266,11 +275,14 @@ impl SimpleState for RoomState {
 
         let sprite_sheet =
             load_sprite_sheet(&world, "sprites/Space Cadet.png", "sprites/Space Cadet.ron");
+        let mut t = Transform::default();
+        t.move_backward(4.);
+        t.move_up(8.);
         world
             .create_entity()
-            .with(Transform::default())
             .with(SpriteRender::new(sprite_sheet.clone(), 1))
             .with(Transparent)
+            .with(t)
             .with(sanity_lib::player::Player::new(
                 map.dimensions().x / 2,
                 map.dimensions().y / 2,

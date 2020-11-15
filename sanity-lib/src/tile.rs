@@ -12,23 +12,13 @@ pub struct Candidates {
     pub w: Vec<TileSetIndex>,
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Default)]
 pub struct RoomTile {
     pub sprite: Option<TileSetIndex>,
-    pub tint: palette::Srgba,
+    pub visible: bool,
     pub candidates: Candidates,
     pub walkable: bool,
-}
-
-impl Default for RoomTile {
-    fn default() -> Self {
-        Self {
-            sprite: None,
-            tint: palette::Srgba::new(1., 1., 1., 1.),
-            candidates: Candidates::default(),
-            walkable: false,
-        }
-    }
+    pub tint: Option<palette::Srgba>,
 }
 
 impl Tile for RoomTile {
@@ -42,6 +32,14 @@ impl Tile for RoomTile {
     }
 
     fn tint(&self, _: Point3<u32>, _: &World) -> palette::Srgba {
-        self.tint
+        if let Some(tint) = self.tint {
+            tint
+        } else {
+            if self.visible {
+                palette::Srgba::new(1., 1., 1., 1.)
+            } else {
+                palette::Srgba::new(0.1, 0.1, 0.1, 0.9)
+            }
+        }
     }
 }

@@ -30,7 +30,7 @@ pub struct TileSelectSystem {
 
 fn tint_tile(tilemap: &mut TileMap<RoomTile>, tile_pos: &Point3<u32>, tint: palette::Srgba) {
     if let Some(tile) = tilemap.get_mut(tile_pos) {
-        tile.tint = tint;
+        tile.tint = Some(tint);
     }
 }
 

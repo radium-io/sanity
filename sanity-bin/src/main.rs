@@ -39,15 +39,16 @@ fn main() -> amethyst::Result<()> {
         )?
         .with_bundle(UiBundle::<StringBindings>::new())?
         .with_bundle(FpsCounterBundle::default())?
-        .with(
-            system::fps::FPSSystem::default(),
-            "example_system",
-            &["input_system"],
-        )
+        .with(system::fps::FPSSystem::default(), "fps_system", &[])
         .with(
             system::visibility::VisibilitySystem::default(),
             "visibility_system",
             &[],
+        )
+        .with(
+            system::movement::MovementSystem::default(),
+            "movement_system",
+            &["input_system"],
         )
         .with(Processor::<sanity_lib::assets::Pairs>::new(), "", &[])
         .with_bundle(

@@ -6,7 +6,7 @@ use bracket_pathfinding::prelude::*;
 
 #[derive(Debug)]
 pub struct Player {
-    pos: Point3<u32>,
+    pub pos: Point3<u32>,
 }
 
 impl Player {

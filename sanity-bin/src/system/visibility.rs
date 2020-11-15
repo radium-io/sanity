@@ -35,11 +35,7 @@ impl<'a> System<'a> for VisibilitySystem {
                     for y in 0..dim.y {
                         let p = Point::new(x, y);
                         if let Some(tile) = tilemap.get_mut(&Point3::new(x, y, 0)) {
-                            if !fov.contains(&p) {
-                                tile.tint = palette::Srgba::new(0.1, 0.1, 0.1, 0.9);
-                            } else {
-                                tile.tint = palette::Srgba::new(1., 1., 1., 1.);
-                            }
+                            tile.visible = fov.contains(&p);
                         }
                     }
                 }
