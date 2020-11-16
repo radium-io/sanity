@@ -132,13 +132,11 @@ fn gen_map(
         }
 
         if s.len() > 0 || e.len() > 0 || n.len() > 0 || w.len() > 0 {
-            println!("{:?} has pattern", idx);
             v.push(PatternDescription::new(
                 wt,
                 direction::CardinalDirectionTable::new_array([n, e, s, w]),
             ));
         } else {
-            println!("{:?} has no pattern", idx);
             v.push(PatternDescription::new(
                 wt,
                 direction::CardinalDirectionTable::new_array([
