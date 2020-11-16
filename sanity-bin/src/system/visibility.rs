@@ -1,14 +1,11 @@
 use amethyst::{
     core::math::Point3,
     derive::SystemDesc,
-    ecs::Join,
     ecs::{
         prelude::{System, SystemData, WriteStorage},
-        ReadStorage,
+        Join, ReadStorage,
     },
-    tiles::Map,
-    tiles::MapStorage,
-    tiles::TileMap,
+    tiles::{Map, MapStorage, TileMap},
 };
 use bracket_pathfinding::prelude::{field_of_view_set, Point};
 use sanity_lib::{map::SanityMap, tile::RoomTile};

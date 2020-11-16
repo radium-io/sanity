@@ -1,21 +1,19 @@
 use amethyst::{
     assets::{AssetStorage, Handle, Loader, ProgressCounter, RonFormat},
-    core::math::Point3,
-    core::math::Vector3,
-    core::Transform,
-    ecs::Component,
-    ecs::Entity,
-    ecs::HashMapStorage,
+    core::{
+        math::{Point3, Vector3},
+        Transform,
+    },
+    ecs::{Component, Entity, HashMapStorage},
     input::{is_close_requested, is_key_down},
     prelude::*,
     renderer::camera::Camera,
     tiles::{MapStorage, TileMap},
     ui::UiCreator,
-    utils::ortho_camera::{CameraNormalizeMode, CameraOrtho},
+    utils::ortho_camera::{CameraNormalizeMode, CameraOrtho, CameraOrthoWorldCoordinates},
     window::ScreenDimensions,
     winit,
 };
-use amethyst::utils::ortho_camera::CameraOrthoWorldCoordinates;
 use sanity_lib::tile::RoomTile;
 
 #[derive(Debug, Default)]

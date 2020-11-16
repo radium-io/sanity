@@ -1,12 +1,10 @@
 use amethyst::{
     derive::SystemDesc,
-    ecs::Join,
     ecs::{
         prelude::{Entity, System, SystemData, WriteStorage},
-        ReadStorage,
+        Join, ReadStorage,
     },
-    tiles::Map,
-    tiles::{MapStorage, TileMap},
+    tiles::{Map, MapStorage, TileMap},
     ui::{UiFinder, UiText},
 };
 use sanity_lib::tile::RoomTile;

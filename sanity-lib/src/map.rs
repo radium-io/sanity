@@ -1,5 +1,7 @@
-use amethyst::tiles::{MapStorage, TileMap};
-use amethyst::{core::math::Point3, tiles::Map};
+use amethyst::{
+    core::math::Point3,
+    tiles::{Map, MapStorage, TileMap},
+};
 use bracket_pathfinding::prelude::*;
 
 use crate::tile::RoomTile;

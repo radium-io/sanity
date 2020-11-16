@@ -1,23 +1,22 @@
 extern crate amethyst;
 use amethyst::{
-    core::math::{Point3, Vector3},
     core::{
         geometry::Plane,
-        math::{Point2, Vector2},
+        math::{Point2, Point3, Vector2, Vector3},
         transform::Transform,
     },
     derive::SystemDesc,
-    ecs::{Entities, Join, Read, ReadExpect, ReadStorage, System, WriteStorage},
+    ecs::{Entities, Join, Read, ReadExpect, ReadStorage, System, SystemData, WriteStorage},
     input::{InputHandler, StringBindings},
-    renderer::camera::{ActiveCamera, Camera},
-    renderer::palette,
-    renderer::palette::Srgba,
-    tiles::Map,
-    tiles::TileMap,
+    renderer::{
+        camera::{ActiveCamera, Camera},
+        palette,
+        palette::Srgba,
+    },
+    tiles::{Map, MapStorage, TileMap},
     window::ScreenDimensions,
     winit,
 };
-use amethyst::{ecs::SystemData, tiles::MapStorage};
 use sanity_lib::tile::RoomTile;
 
 use crate::state::edit::Selected;

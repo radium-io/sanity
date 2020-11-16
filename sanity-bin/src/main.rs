@@ -1,58 +1,47 @@
 use std::{fmt::Debug, marker::PhantomData};
 
 use amethyst::{
-    assets::Handle,
-    assets::Processor,
-    core::frame_limiter::FrameRateLimitStrategy,
-    core::{transform::TransformBundle, Hidden},
-    ecs::ReadStorage,
+    assets::{Handle, Processor},
+    core::{frame_limiter::FrameRateLimitStrategy, transform::TransformBundle, Hidden},
+    ecs::{ReadStorage, SystemData, World},
     input::{InputBundle, StringBindings},
     prelude::*,
-    renderer::bundle::RenderOrder,
-    renderer::bundle::RenderPlan,
-    renderer::bundle::Target,
-    renderer::Factory,
-    renderer::RenderPlugin,
-    renderer::SpriteSheet,
-    renderer::Texture,
     renderer::{
+        bundle::{RenderOrder, RenderPlan, Target},
         plugins::{RenderFlat2D, RenderToWindow},
         types::DefaultBackend,
-        Backend, RenderingBundle,
+        Backend, Factory, RenderGroupDesc, RenderPlugin, RenderingBundle, SpriteSheet, Texture,
     },
     shred::DispatcherBuilder,
-    tiles::CoordinateEncoder,
-    tiles::DrawTiles2DDesc,
-    tiles::MortonEncoder2D,
-    tiles::{DrawTiles2DBounds, DrawTiles2DBoundsDefault, Tile, TileMap},
+    tiles::{
+        CoordinateEncoder, DrawTiles2DBounds, DrawTiles2DBoundsDefault, DrawTiles2DDesc,
+        MortonEncoder2D, Tile, TileMap,
+    },
     ui::{RenderUi, UiBundle},
-    utils::application_root_dir,
-    utils::fps_counter::FpsCounterBundle,
+    utils::{application_root_dir, fps_counter::FpsCounterBundle},
+    Result,
 };
-
-use amethyst::Result;
 
 mod state;
 mod system;
 
-use amethyst::assets::{HotReloadBundle, HotReloadStrategy};
-use amethyst::utils::ortho_camera::CameraOrthoSystem;
+use amethyst::{
+    assets::{HotReloadBundle, HotReloadStrategy},
+    utils::ortho_camera::CameraOrthoSystem,
+};
 
 fn main() -> Result<()> {
     amethyst::start_logger(Default::default());
 
     let app_root = application_root_dir()?;
 
-    let resources = app_root.parent().unwrap().join("assets");
-    let display_config = app_root.join("config/display_config.ron");
-    let key_bindings_path = app_root.join("config/input.ron");
-
     let game_data = GameDataBuilder::default()
         .with(CameraOrthoSystem::default(), "ortho_camera_system", &[])
         .with_bundle(HotReloadBundle::new(HotReloadStrategy::every(2)))?
         .with_bundle(TransformBundle::new())?
         .with_bundle(
-            InputBundle::<StringBindings>::new().with_bindings_from_file(&key_bindings_path)?,
+            InputBundle::<StringBindings>::new()
+                .with_bindings_from_file(&app_root.join("config/input.ron"))?,
         )?
         .with_bundle(UiBundle::<StringBindings>::new())?
         .with_bundle(FpsCounterBundle::default())?
@@ -71,7 +60,7 @@ fn main() -> Result<()> {
         .with_bundle(
             RenderingBundle::<DefaultBackend>::new()
                 .with_plugin(
-                    RenderToWindow::from_config_path(display_config)?
+                    RenderToWindow::from_config_path(app_root.join("config/display_config.ron"))?
                         .with_clear([0.34, 0.36, 0.52, 1.0]),
                 )
                 .with_plugin(RenderUi::default())
@@ -79,9 +68,12 @@ fn main() -> Result<()> {
                 .with_plugin(RenderTiles2D::<sanity_lib::tile::RoomTile>::default()),
         )?;
 
-    let mut game = Application::build(resources, state::room::RoomState::default())?
-        .with_frame_limit(FrameRateLimitStrategy::Yield, 101)
-        .build(game_data)?;
+    let mut game = Application::build(
+        app_root.parent().unwrap().join("assets"),
+        state::room::RoomState::new(48, 32),
+    )?
+    .with_frame_limit(FrameRateLimitStrategy::Yield, 101)
+    .build(game_data)?;
 
     game.run();
 
@@ -120,8 +112,6 @@ type SetupData<'a, T, E> = (
     ReadStorage<'a, Hidden>,
     ReadStorage<'a, TileMap<T, E>>,
 );
-use amethyst::ecs::{SystemData, World};
-use amethyst::renderer::RenderGroupDesc;
 impl<B: Backend, T: Tile, E: CoordinateEncoder, Z: DrawTiles2DBounds> RenderPlugin<B>
     for RenderTiles2D<T, E, Z>
 {

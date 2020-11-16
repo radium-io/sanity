@@ -1,22 +1,17 @@
-use amethyst::ui::{
-    get_default_font, Anchor, FontAsset, Interactable, LineMode, UiText, UiTransform,
-};
 use amethyst::{
-    assets::Handle,
+    assets::{AssetStorage, Handle, Loader},
     core::Transform,
+    ecs::prelude::*,
+    input::is_close_requested,
+    prelude::{Builder, GameData, SimpleState, SimpleTrans, StateData, Trans, WorldExt},
     renderer::camera::Camera,
+    ui::{
+        get_default_font, Anchor, FontAsset, Interactable, LineMode, UiEvent, UiEventType, UiText,
+        UiTransform,
+    },
     utils::ortho_camera::{CameraNormalizeMode, CameraOrtho},
     window::ScreenDimensions,
-};
-use amethyst::{
-    assets::{AssetStorage, Loader},
-    input::is_close_requested,
     StateEvent,
-};
-use amethyst::{ecs::prelude::*, ui::UiEventType};
-use amethyst::{
-    prelude::{Builder, GameData, SimpleState, SimpleTrans, StateData, Trans, WorldExt},
-    ui::UiEvent,
 };
 use nfd::Response;
 

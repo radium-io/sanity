@@ -1,15 +1,13 @@
-use amethyst::utils::application_root_dir;
 use amethyst::{
     assets::AssetStorage,
     core::math::Point3,
     derive::SystemDesc,
-    ecs::{Join, Read, ReadStorage, System, WriteStorage},
-    input::InputHandler,
-    input::StringBindings,
-    tiles::{Map, TileMap},
+    ecs::{Join, Read, ReadStorage, System, SystemData, WriteStorage},
+    input::{InputHandler, StringBindings},
+    tiles::{Map, MapStorage, TileMap},
+    utils::application_root_dir,
     winit,
 };
-use amethyst::{ecs::SystemData, tiles::MapStorage};
 use sanity_lib::{assets::Pairs, tile::RoomTile};
 
 #[derive(SystemDesc, Default)]

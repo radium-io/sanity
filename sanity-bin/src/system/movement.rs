@@ -1,19 +1,13 @@
 use amethyst::{
-    core::math::Point3,
-    core::timing::Time,
-    core::Transform,
+    core::{math::Point3, timing::Time, Transform},
     derive::SystemDesc,
-    ecs::Join,
     ecs::{
         prelude::{System, SystemData, WriteStorage},
-        ReadStorage,
+        Join, ReadStorage,
     },
-    input::InputHandler,
-    input::StringBindings,
+    input::{InputHandler, StringBindings},
     shred::Read,
-    tiles::Map,
-    tiles::MapStorage,
-    tiles::TileMap,
+    tiles::{Map, MapStorage, TileMap},
 };
 use bracket_pathfinding::prelude::Point;
 use core::time::Duration;

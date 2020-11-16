@@ -13,8 +13,10 @@ use amethyst::{
     utils::application_root_dir,
 };
 
-use amethyst::assets::{HotReloadBundle, HotReloadStrategy};
-use amethyst::utils::ortho_camera::CameraOrthoSystem;
+use amethyst::{
+    assets::{HotReloadBundle, HotReloadStrategy},
+    utils::ortho_camera::CameraOrthoSystem,
+};
 use sanity_lib;
 mod state;
 mod system;

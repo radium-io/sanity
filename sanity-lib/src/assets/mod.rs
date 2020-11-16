@@ -1,4 +1,3 @@
 mod pairs;
 
-pub use self::pairs::Pairs;
-pub use self::pairs::PairsHandle;
+pub use self::pairs::{Pairs, PairsHandle};

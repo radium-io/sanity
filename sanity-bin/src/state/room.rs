@@ -2,7 +2,10 @@ use std::fmt::Debug;
 
 use amethyst::{
     assets::{AssetStorage, Handle, Loader, ProgressCounter, RonFormat},
-    core::{math::Point3, math::Vector3, Named, Transform},
+    core::{
+        math::{Point2, Point3, Vector3},
+        Named, Transform,
+    },
     input::{is_close_requested, is_key_down},
     prelude::*,
     renderer::{
@@ -11,21 +14,31 @@ use amethyst::{
         sprite::{SpriteSheet, SpriteSheetFormat},
         SpriteRender, Texture, Transparent,
     },
-    tiles::Map,
-    tiles::{MapStorage, TileMap},
+    tiles::{Map, MapStorage, TileMap},
     ui::UiCreator,
     utils::ortho_camera::{CameraNormalizeMode, CameraOrtho, CameraOrthoWorldCoordinates},
     window::ScreenDimensions,
     winit,
 };
 use rand::prelude::*;
-use sanity_lib::map::SanityMap;
-use sanity_lib::tile::RoomTile;
+use sanity_lib::{map::SanityMap, tile::RoomTile};
 
 #[derive(Debug, Default)]
 pub struct RoomState {
     progress_counter: ProgressCounter,
     map_generation: usize,
+    width: u32,
+    height: u32,
+}
+
+impl RoomState {
+    pub fn new(width: u32, height: u32) -> Self {
+        Self {
+            width,
+            height,
+            ..Default::default()
+        }
+    }
 }
 
 fn load_sprite_sheet(world: &World, png_path: &str, ron_path: &str) -> Handle<SpriteSheet> {
@@ -49,21 +62,26 @@ use wfc::*;
 struct ForbidCorner {
     width: i32,
     height: i32,
+    start: Coord,
 }
 impl ForbidPattern for ForbidCorner {
     fn forbid<W: Wrap, R: Rng>(&mut self, fi: &mut ForbidInterface<W>, rng: &mut R) {
         for x in 0..self.width {
-            fi.forbid_all_patterns_except(Coord::new(x, 0), 17, rng);
-            fi.forbid_all_patterns_except(Coord::new(x, self.height - 1), 17, rng);
+            fi.forbid_all_patterns_except(Coord::new(x, 0), 17, rng)
+                .unwrap();
+            fi.forbid_all_patterns_except(Coord::new(x, self.height - 1), 17, rng)
+                .unwrap();
         }
 
         for y in 0..self.height {
-            fi.forbid_all_patterns_except(Coord::new(0, y), 17, rng);
-            fi.forbid_all_patterns_except(Coord::new(self.width - 1, y), 17, rng);
+            fi.forbid_all_patterns_except(Coord::new(0, y), 17, rng)
+                .unwrap();
+            fi.forbid_all_patterns_except(Coord::new(self.width - 1, y), 17, rng)
+                .unwrap();
         }
 
         // TODO: place entrances and exits and some path between them
-        fi.forbid_all_patterns_except(Coord::new(self.width / 2, self.height / 2), 6, rng);
+        fi.forbid_all_patterns_except(self.start, 6, rng).unwrap();
     }
 }
 
@@ -74,9 +92,8 @@ fn gen_map(
     pairs: &sanity_lib::assets::Pairs,
     width: u32,
     height: u32,
+    start: Coord,
 ) {
-    let mut rng = thread_rng();
-
     let mut v: Vec<PatternDescription> = Vec::new();
 
     let max_tiles = 115;
@@ -155,6 +172,8 @@ fn gen_map(
     let mut wave = wfc::Wave::new(wfc::Size::try_new(width, height).unwrap());
     let mut stats = wfc::GlobalStats::new(patterns);
 
+    let mut rng = thread_rng();
+
     let mut wfc_run = wfc::RunBorrow::new_wrap_forbid(
         &mut context,
         &mut wave,
@@ -163,6 +182,7 @@ fn gen_map(
         ForbidCorner {
             width: width as i32,
             height: height as i32,
+            start,
         },
         &mut rng,
     );
@@ -198,16 +218,12 @@ fn gen_map(
         }
     });
 
-    let start = Point {
-        x: width as i32 / 2,
-        y: height as i32 / 2,
-    };
     let clone = map.clone();
     let my_map = SanityMap(&clone);
     let dijkstra = DijkstraMap::new(
         width,
         height,
-        &[my_map.point2d_to_index(start)],
+        &[my_map.point2d_to_index(Point::new(start.x, start.y))],
         &my_map,
         1000.,
     );
@@ -220,6 +236,8 @@ fn gen_map(
                     if dijkstra.map[my_map.point2d_to_index(p)] == std::f32::MAX {
                         tile.sprite = Some(17);
                         tile.walkable = false;
+
+                        // TODO: remove surrounding tiles as well
                     }
                 }
             }
@@ -314,13 +332,22 @@ impl SimpleState for RoomState {
     fn update(&mut self, data: &mut StateData<'_, GameData<'_, '_>>) -> SimpleTrans {
         if self.progress_counter.is_complete() && self.map_generation < 1 {
             data.world.exec(
-                |(mut maps, pairs, assets): (
+                |(mut maps, pairs, assets, players): (
                     WriteStorage<'_, TileMap<RoomTile>>,
                     ReadStorage<'_, sanity_lib::assets::PairsHandle>,
                     Read<'_, AssetStorage<sanity_lib::assets::Pairs>>,
+                    ReadStorage<'_, sanity_lib::player::Player>,
                 )| {
-                    for (map, pair) in (&mut maps, &pairs).join() {
-                        gen_map(map, assets.get(pair).unwrap(), 48, 32);
+                    for player in (&players).join() {
+                        for (map, pair) in (&mut maps, &pairs).join() {
+                            gen_map(
+                                map,
+                                assets.get(pair).unwrap(),
+                                self.width,
+                                self.height,
+                                Coord::new(player.pos.x as i32, player.pos.y as i32),
+                            );
+                        }
                     }
                 },
             );
@@ -343,13 +370,28 @@ impl SimpleState for RoomState {
                 Trans::Quit
             } else if is_key_down(&event, winit::VirtualKeyCode::F) {
                 data.world.exec(
-                    |(mut maps, pairs, assets): (
+                    |(mut maps, pairs, assets, players): (
                         WriteStorage<'_, TileMap<RoomTile>>,
                         ReadStorage<'_, sanity_lib::assets::PairsHandle>,
                         Read<'_, AssetStorage<sanity_lib::assets::Pairs>>,
+                        ReadStorage<'_, sanity_lib::player::Player>,
                     )| {
-                        for (map, pair) in (&mut maps, &pairs).join() {
-                            gen_map(map, assets.get(pair).unwrap(), 48, 32);
+                        for player in (&players).join() {
+                            if player.pos.xy() < Point2::new(self.width - 3, self.height - 3)
+                                && player.pos.xy() > Point2::new(2, 2)
+                            {
+                                for (map, pair) in (&mut maps, &pairs).join() {
+                                    gen_map(
+                                        map,
+                                        assets.get(pair).unwrap(),
+                                        self.width,
+                                        self.height,
+                                        Coord::new(player.pos.x as i32, player.pos.y as i32),
+                                    );
+                                }
+                            } else {
+                                println!("Player too close to edge");
+                            }
                         }
                     },
                 );
