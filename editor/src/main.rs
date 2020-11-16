@@ -14,7 +14,7 @@ use amethyst::{
 };
 
 use amethyst::assets::{HotReloadBundle, HotReloadStrategy};
-use amethyst_utils::ortho_camera::CameraOrthoSystem;
+use amethyst::utils::ortho_camera::CameraOrthoSystem;
 use sanity_lib;
 mod state;
 mod system;

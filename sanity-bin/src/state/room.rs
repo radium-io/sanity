@@ -3,24 +3,21 @@ use std::fmt::Debug;
 use amethyst::{
     assets::{AssetStorage, Handle, Loader, ProgressCounter, RonFormat},
     core::{math::Point3, math::Vector3, Named, Transform},
-    ecs::Join,
     input::{is_close_requested, is_key_down},
     prelude::*,
-    renderer::SpriteRender,
-    renderer::Transparent,
     renderer::{
         camera::Camera,
         formats::texture::ImageFormat,
         sprite::{SpriteSheet, SpriteSheetFormat},
-        Texture,
+        SpriteRender, Texture, Transparent,
     },
     tiles::Map,
     tiles::{MapStorage, TileMap},
     ui::UiCreator,
+    utils::ortho_camera::{CameraNormalizeMode, CameraOrtho, CameraOrthoWorldCoordinates},
     window::ScreenDimensions,
     winit,
 };
-use amethyst_utils::ortho_camera::{CameraNormalizeMode, CameraOrtho, CameraOrthoWorldCoordinates};
 use rand::prelude::*;
 use sanity_lib::map::SanityMap;
 use sanity_lib::tile::RoomTile;

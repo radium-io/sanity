@@ -1,3 +1,4 @@
+use amethyst::utils::application_root_dir;
 use amethyst::{
     assets::AssetStorage,
     core::math::Point3,
@@ -9,7 +10,6 @@ use amethyst::{
     winit,
 };
 use amethyst::{ecs::SystemData, tiles::MapStorage};
-use amethyst_utils::application_root_dir;
 use sanity_lib::{assets::Pairs, tile::RoomTile};
 
 #[derive(SystemDesc, Default)]

@@ -30,15 +30,15 @@ use amethyst::{
     utils::fps_counter::FpsCounterBundle,
 };
 
-use amethyst_error;
+use amethyst::Result;
 
 mod state;
 mod system;
 
 use amethyst::assets::{HotReloadBundle, HotReloadStrategy};
-use amethyst_utils::ortho_camera::CameraOrthoSystem;
+use amethyst::utils::ortho_camera::CameraOrthoSystem;
 
-fn main() -> amethyst::Result<()> {
+fn main() -> Result<()> {
     amethyst::start_logger(Default::default());
 
     let app_root = application_root_dir()?;
@@ -129,7 +129,7 @@ impl<B: Backend, T: Tile, E: CoordinateEncoder, Z: DrawTiles2DBounds> RenderPlug
         &mut self,
         world: &mut World,
         _builder: &mut DispatcherBuilder<'a, 'b>,
-    ) -> Result<(), amethyst_error::Error> {
+    ) -> Result<()> {
         SetupData::<T, E>::setup(world);
 
         Ok(())
@@ -140,7 +140,7 @@ impl<B: Backend, T: Tile, E: CoordinateEncoder, Z: DrawTiles2DBounds> RenderPlug
         plan: &mut RenderPlan<B>,
         _factory: &mut Factory<B>,
         _res: &World,
-    ) -> Result<(), amethyst_error::Error> {
+    ) -> Result<()> {
         plan.extend_target(self.target, |ctx| {
             ctx.add(
                 RenderOrder::Transparent,

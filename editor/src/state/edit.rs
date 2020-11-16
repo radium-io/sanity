@@ -15,7 +15,7 @@ use amethyst::{
     window::ScreenDimensions,
     winit,
 };
-use amethyst_utils::ortho_camera::CameraOrthoWorldCoordinates;
+use amethyst::utils::ortho_camera::CameraOrthoWorldCoordinates;
 use sanity_lib::tile::RoomTile;
 
 #[derive(Debug, Default)]
