@@ -14,7 +14,6 @@ use sanity_lib::tile::RoomTile;
 #[derive(Default, SystemDesc)]
 pub struct UISystem {
     south_list: Option<Entity>,
-    east_list: Option<Entity>,
 }
 
 impl<'a> System<'a> for UISystem {

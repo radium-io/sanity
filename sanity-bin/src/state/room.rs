@@ -6,7 +6,6 @@ use amethyst::{
     ecs::Join,
     input::{is_close_requested, is_key_down},
     prelude::*,
-    renderer::palette,
     renderer::SpriteRender,
     renderer::Transparent,
     renderer::{
@@ -22,7 +21,6 @@ use amethyst::{
     winit,
 };
 use amethyst_utils::ortho_camera::{CameraNormalizeMode, CameraOrtho, CameraOrthoWorldCoordinates};
-use direction::CardinalDirectionTable;
 use rand::prelude::*;
 use sanity_lib::map::SanityMap;
 use sanity_lib::tile::RoomTile;
@@ -178,7 +176,7 @@ fn gen_map(
 
     wfc_run.collapse_retrying(wfc::retry::Forever, &mut rng);
 
-    let grid = wave.grid().map_ref_with_coord(|c, cell| {
+    wave.grid().map_ref_with_coord(|c, cell| {
         if let Some(mut tile) = map.get_mut(&Point3::new(c.x as u32, c.y as u32, 0)) {
             let s = Some(
                 cell.chosen_pattern_id()

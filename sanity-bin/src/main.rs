@@ -100,7 +100,7 @@ pub struct RenderTiles2D<
 }
 
 impl<T: Tile, E: CoordinateEncoder, Z: DrawTiles2DBounds> Debug for RenderTiles2D<T, E, Z> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         todo!()
     }
 }
@@ -120,7 +120,7 @@ type SetupData<'a, T, E> = (
     ReadStorage<'a, Hidden>,
     ReadStorage<'a, TileMap<T, E>>,
 );
-use amethyst::ecs::{Entities, Join, Read, ReadExpect, System, SystemData, World};
+use amethyst::ecs::{SystemData, World};
 use amethyst::renderer::RenderGroupDesc;
 impl<B: Backend, T: Tile, E: CoordinateEncoder, Z: DrawTiles2DBounds> RenderPlugin<B>
     for RenderTiles2D<T, E, Z>
@@ -128,7 +128,7 @@ impl<B: Backend, T: Tile, E: CoordinateEncoder, Z: DrawTiles2DBounds> RenderPlug
     fn on_build<'a, 'b>(
         &mut self,
         world: &mut World,
-        builder: &mut DispatcherBuilder<'a, 'b>,
+        _builder: &mut DispatcherBuilder<'a, 'b>,
     ) -> Result<(), amethyst_error::Error> {
         SetupData::<T, E>::setup(world);
 

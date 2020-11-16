@@ -1,6 +1,6 @@
 use amethyst::{
     core::math::Point3,
-    ecs::{Component, HashMapStorage, NullStorage},
+    ecs::{Component, HashMapStorage},
 };
 use bracket_pathfinding::prelude::*;
 

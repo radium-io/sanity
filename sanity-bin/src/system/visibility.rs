@@ -3,10 +3,9 @@ use amethyst::{
     derive::SystemDesc,
     ecs::Join,
     ecs::{
-        prelude::{Entity, System, SystemData, WriteStorage},
+        prelude::{System, SystemData, WriteStorage},
         ReadStorage,
     },
-    renderer::palette,
     tiles::Map,
     tiles::MapStorage,
     tiles::TileMap,

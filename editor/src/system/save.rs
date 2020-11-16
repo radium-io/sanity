@@ -93,7 +93,7 @@ impl<'s> System<'s> for SaveSystem {
                         .join("assets")
                         .join(save_path.0.clone());
 
-                    let file = std::fs::write(save, s).unwrap();
+                    std::fs::write(save, s).unwrap();
                 }
 
                 self.pairs = Some(p);

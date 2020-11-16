@@ -1,17 +1,15 @@
 use amethyst::{
     core::math::Point3,
-    core::math::{Translation2, Translation3},
     core::timing::Time,
     core::Transform,
     derive::SystemDesc,
     ecs::Join,
     ecs::{
-        prelude::{Entity, System, SystemData, WriteStorage},
+        prelude::{System, SystemData, WriteStorage},
         ReadStorage,
     },
     input::InputHandler,
     input::StringBindings,
-    renderer::palette,
     shred::Read,
     tiles::Map,
     tiles::MapStorage,
