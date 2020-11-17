@@ -54,14 +54,19 @@ fn main() -> Result<()> {
             &[],
         )
         .with(
-            system::movement::MovementSystem::default(),
-            "movement_system",
-            &["input_system"],
-        )
-        .with(
             system::shooting::ShootingSystem::default(),
             "shooting_system",
             &["input_system"],
+        )
+        .with(
+            system::player::PlayerSystem::default(),
+            "player_system",
+            &["input_system"],
+        )
+        .with(
+            system::movement::MovementSystem::default(),
+            "movement_system",
+            &["input_system", "player_system", "shooting_system"],
         )
         .with(Processor::<sanity_lib::assets::Pairs>::new(), "", &[])
         .with_bundle(

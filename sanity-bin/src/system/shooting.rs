@@ -32,7 +32,7 @@ impl<'a> System<'a> for ShootingSystem {
     type SystemData = (
         Entities<'a>,
         ReadStorage<'a, TileMap<RoomTile>>,
-        WriteStorage<'a, Transform>,
+        ReadStorage<'a, Transform>,
         Read<'a, InputHandler<StringBindings>>,
         WriteStorage<'a, crate::component::Projectile>,
         ReadStorage<'a, crate::component::Player>,
@@ -47,7 +47,7 @@ impl<'a> System<'a> for ShootingSystem {
         (
             entities,
             tilemaps,
-            mut transforms,
+            transforms,
             input,
             mut projectiles,
             players,
@@ -59,7 +59,7 @@ impl<'a> System<'a> for ShootingSystem {
     ) {
         for tilemap in (&tilemaps).join() {
             if time.absolute_time() - self.last_move > Duration::from_millis(300) {
-                for player in (&players).join() {
+                for (player, transform) in (&players, &transforms).join() {
                     for shoot_dir in &[
                         ("shoot_up", ABOVE),
                         ("shoot_down", BELOW),
@@ -69,12 +69,13 @@ impl<'a> System<'a> for ShootingSystem {
                         if input.action_is_down(shoot_dir.0).unwrap_or(false) {
                             self.last_move = time.absolute_time();
 
-                            let spawn_pos = player.pos() + shoot_dir.1;
+                            let player_pos = tilemap.to_tile(&transform.translation().xy().to_homogeneous(), None).unwrap();
+                            let spawn_pos = Point::new(player_pos.x, player_pos.y) + shoot_dir.1;
                             let target_pt = Point3::new(spawn_pos.x as u32, spawn_pos.y as u32, 0);
                             if let Some(tile) = tilemap.get(&target_pt) {
                                 if tile.walkable {
                                     let mut t = Transform::default();
-                                    let world_pos = tilemap.to_world(&player.pos, None);
+                                    let world_pos = tilemap.to_world(&player_pos, None);
                                     t.set_translation(world_pos);
 
                                     lazy.create_entity(&entities)
@@ -94,30 +95,7 @@ impl<'a> System<'a> for ShootingSystem {
                     }
                 }
             }
-
-            for (e, _projectile, transform, intent) in
-                (&entities, &mut projectiles, &mut transforms, &intents).join()
-            {
-                if let Ok(tile) = tilemap.to_tile(transform.translation(), None) {
-                    let coord = intent.dir.coord();
-                    let p = Point::new(coord.x, coord.y) + Point::new(tile.x, tile.y);
-
-                    if let Some(tile) = tilemap.get(&Point3::new(p.x as u32, p.y as u32, 0)) {
-                        if tile.walkable {
-                            //  TODO: check for collidable things
-                            transform.prepend_translation_x(
-                                coord.x as f32 * tilemap.tile_dimensions().x as f32 / 4.,
-                            );
-                            transform.prepend_translation_y(
-                                -coord.y as f32 * tilemap.tile_dimensions().y as f32 / 4.,
-                                // note: world coords are inverted from grid coords on y
-                            );
-                        } else {
-                            entities.delete(e);
-                        }
-                    }
-                }
             }
         }
     }
-}
+
