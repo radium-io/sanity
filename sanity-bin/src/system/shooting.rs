@@ -3,9 +3,10 @@ use amethyst::{
     derive::SystemDesc,
     ecs::{
         prelude::{System, SystemData, WriteStorage},
-        Entities, Join, ReadStorage,
+        Entities, Join, LazyUpdate, ReadStorage,
     },
     input::{InputHandler, StringBindings},
+    prelude::Builder,
     renderer::{SpriteRender, Transparent},
     shred::{Read, ReadExpect},
     tiles::{Map, MapStorage, TileMap},
@@ -40,7 +41,7 @@ impl<'a> System<'a> for ShootingSystem {
         ReadExpect<'a, crate::resource::Bullets>,
         WriteStorage<'a, crate::component::MovementIntent>,
         WriteStorage<'a, Transparent>,
-        WriteStorage<'a, Hidden>,
+        Read<'a, LazyUpdate>,
     );
 
     fn run(
@@ -57,7 +58,7 @@ impl<'a> System<'a> for ShootingSystem {
             bullet_res,
             mut intents,
             mut transparents,
-            mut hiddens,
+            lazy,
         ): Self::SystemData,
     ) {
         for tilemap in (&tilemaps).join() {
@@ -80,24 +81,16 @@ impl<'a> System<'a> for ShootingSystem {
 
                                     println!("{:?}", world_pos);
                                     t.set_translation(world_pos);
-                                    entities
-                                        .build_entity()
-                                        .with(Transparent, &mut transparents)
-                                        .with(t, &mut transforms)
-                                        .with(
-                                            crate::component::Projectile::new(10),
-                                            &mut projectiles,
-                                        )
-                                        .with(
-                                            crate::component::MovementIntent {
-                                                dir: direction::CardinalDirection::from_unit_coord(
-                                                    Coord::new(shoot_dir.1.x, shoot_dir.1.y),
-                                                ),
-                                            },
-                                            &mut intents,
-                                        )
-                                        .with(bullet_res.new_sprite(), &mut sprites)
-                                        .with(Hidden, &mut hiddens)
+                                    lazy.create_entity(&entities)
+                                        .with(Transparent)
+                                        .with(t)
+                                        .with(crate::component::Projectile::new(10))
+                                        .with(crate::component::MovementIntent {
+                                            dir: direction::CardinalDirection::from_unit_coord(
+                                                Coord::new(shoot_dir.1.x, shoot_dir.1.y),
+                                            ),
+                                        })
+                                        .with(bullet_res.new_sprite())
                                         .build();
                                 }
                             }
@@ -118,7 +111,6 @@ impl<'a> System<'a> for ShootingSystem {
                                 if tile.walkable {
                                     //  TODO: check for collidable things
                                     transform.move_up(tilemap.tile_dimensions().y as f32 / 3.);
-                                    hiddens.remove(e);
                                 } else {
                                     entities.delete(e);
                                 }
@@ -130,7 +122,6 @@ impl<'a> System<'a> for ShootingSystem {
                                 if tile.walkable {
                                     //  TODO: check for collidable things
                                     transform.move_right(tilemap.tile_dimensions().x as f32 / 3.);
-                                    hiddens.remove(e);
                                 } else {
                                     entities.delete(e);
                                 }
@@ -142,7 +133,6 @@ impl<'a> System<'a> for ShootingSystem {
                                 if tile.walkable {
                                     //  TODO: check for collidable things
                                     transform.move_down(tilemap.tile_dimensions().y as f32 / 3.);
-                                    hiddens.remove(e);
                                 } else {
                                     entities.delete(e);
                                 }
@@ -154,7 +144,6 @@ impl<'a> System<'a> for ShootingSystem {
                                 if tile.walkable {
                                     //  TODO: check for collidable things
                                     transform.move_left(tilemap.tile_dimensions().x as f32 / 3.);
-                                    hiddens.remove(e);
                                 } else {
                                     entities.delete(e);
                                 }
