@@ -7,5 +7,9 @@
 "left": [[Key(A)]],
 "down": [[Key(S)]],
 "right": [[Key(D)]],
+"shoot_up": [[Key(I)]],
+"shoot_left": [[Key(J)]],
+"shoot_down": [[Key(K)]],
+"shoot_right": [[Key(L)]],
     },
 )

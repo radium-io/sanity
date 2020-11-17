@@ -16,7 +16,7 @@ pub struct VisibilitySystem {}
 impl<'a> System<'a> for VisibilitySystem {
     type SystemData = (
         WriteStorage<'a, TileMap<RoomTile>>,
-        ReadStorage<'a, sanity_lib::player::Player>,
+        ReadStorage<'a, crate::component::Player>,
     );
 
     fn run(&mut self, (mut tilemaps, players): Self::SystemData) {

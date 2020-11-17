@@ -41,22 +41,6 @@ impl RoomState {
     }
 }
 
-fn load_sprite_sheet(world: &World, png_path: &str, ron_path: &str) -> Handle<SpriteSheet> {
-    let loader = world.read_resource::<Loader>();
-    let texture_handle = loader.load(
-        png_path,
-        ImageFormat::default(),
-        (),
-        &world.read_resource::<AssetStorage<Texture>>(),
-    );
-    loader.load(
-        ron_path,
-        SpriteSheetFormat(texture_handle),
-        (),
-        &world.read_resource::<AssetStorage<SpriteSheet>>(),
-    )
-}
-
 use wfc::*;
 
 struct ForbidCorner {
@@ -247,81 +231,102 @@ fn gen_map(
 
 use amethyst::ecs::prelude::*;
 
+fn init_camera(world: &mut World) {
+    let (width, height) = {
+        let dim = world.read_resource::<ScreenDimensions>();
+        (dim.width(), dim.height())
+    };
+
+    let mut ortho = CameraOrtho::normalized(CameraNormalizeMode::Contain);
+    let std = Camera::standard_2d(width, height);
+    ortho.world_coordinates = CameraOrthoWorldCoordinates {
+        left: -width / 2.,
+        right: width / 2.,
+        top: height / 2.,
+        bottom: -height / 2.,
+        near: 0.125,
+        far: 2000.,
+    };
+
+    world
+        .create_entity()
+        .with(Transform::from(Vector3::new(0., 0., 1000.)))
+        .with(std)
+        //.with(ortho)
+        .named("camera")
+        .build();
+}
+
+fn init_map(width: u32, height: u32, world: &mut World, progress: &mut ProgressCounter) {
+    let spritesheet_handle =
+        crate::resource::load_sprite_sheet(&world, "Dungeon_Tileset.png", "Dungeon_Tileset.ron");
+
+    let map = TileMap::<RoomTile>::new(
+        Vector3::new(width, height, 1), // The dimensions of the map
+        Vector3::new(32, 32, 1),        // The dimensions of each tile
+        Some(spritesheet_handle),
+    );
+
+    // load the tile pairs for this tileset
+    let pairs = {
+        let loader = world.read_resource::<Loader>();
+        loader.load(
+            "Dungeon_Tileset.pairs.ron",
+            RonFormat,
+            progress,
+            &world.read_resource::<AssetStorage<sanity_lib::assets::Pairs>>(),
+        )
+    };
+
+    let mut c_t = Transform::default();
+    c_t.move_forward(5.);
+    world
+        .create_entity()
+        .with(map)
+        .with(pairs)
+        .with(c_t)
+        .build();
+}
+
+fn init_player(width: u32, height: u32, world: &mut World) {
+    let sprite_sheet = crate::resource::load_sprite_sheet(
+        &world,
+        "sprites/Space Cadet.png",
+        "sprites/Space Cadet.ron",
+    );
+    let mut t = Transform::default();
+    t.move_backward(500.);
+    t.move_up(8.);
+    world
+        .create_entity()
+        .with(SpriteRender::new(sprite_sheet.clone(), 0))
+        .with(Transparent)
+        .with(t)
+        .with(crate::component::Player::new(width / 2, height / 2))
+        .build();
+}
+
 impl SimpleState for RoomState {
     fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
         let StateData { world, .. } = data;
 
+        // register components, may be able to remove if used by system
         world.register::<Named>();
         world.register::<Handle<sanity_lib::assets::Pairs>>();
 
-        let (width, height) = {
-            let dim = world.read_resource::<ScreenDimensions>();
-            (dim.width(), dim.height())
-        };
-
-        let mut ortho = CameraOrtho::normalized(CameraNormalizeMode::Contain);
-        let std = Camera::standard_2d(width, height);
-        ortho.world_coordinates = CameraOrthoWorldCoordinates {
-            left: -width / 2.,
-            right: width / 2.,
-            top: height / 2.,
-            bottom: -height / 2.,
-            near: 0.125,
-            far: 2000.,
-        };
-
-        world
-            .create_entity()
-            .with(Transform::from(Vector3::new(0., 0., 1000.)))
-            .with(std)
-            //.with(ortho)
-            .named("camera")
-            .build();
-
-        let spritesheet_handle =
-            load_sprite_sheet(&world, "Dungeon_Tileset.png", "Dungeon_Tileset.ron");
-
-        let map = TileMap::<RoomTile>::new(
-            Vector3::new(48, 32, 1), // The dimensions of the map
-            Vector3::new(32, 32, 1), // The dimensions of each tile
-            Some(spritesheet_handle),
+        // insert resources in to world
+        let sheet = crate::resource::load_sprite_sheet(
+            &world,
+            "sprites/bullets.png",
+            "sprites/bullets.ron",
         );
+        world.insert(crate::resource::Bullets { sheet });
 
-        let sprite_sheet =
-            load_sprite_sheet(&world, "sprites/Space Cadet.png", "sprites/Space Cadet.ron");
-        let mut t = Transform::default();
-        t.move_backward(500.);
-        t.move_up(8.);
-        world
-            .create_entity()
-            .with(SpriteRender::new(sprite_sheet.clone(), 0))
-            .with(Transparent)
-            .with(t)
-            .with(sanity_lib::player::Player::new(
-                map.dimensions().x / 2,
-                map.dimensions().y / 2,
-            ))
-            .build();
+        init_camera(world);
 
-        // load the tile pairs for this tileset
-        let pairs = {
-            let loader = world.read_resource::<Loader>();
-            loader.load(
-                "Dungeon_Tileset.pairs.ron",
-                RonFormat,
-                &mut self.progress_counter,
-                &world.read_resource::<AssetStorage<sanity_lib::assets::Pairs>>(),
-            )
-        };
+        init_map(self.width, self.height, world, &mut self.progress_counter);
 
-        let mut c_t = Transform::default();
-        c_t.move_forward(5.);
-        world
-            .create_entity()
-            .with(map)
-            .with(pairs)
-            .with(c_t)
-            .build();
+        init_player(self.width, self.height, world);
 
         // FIXME: move to global state?
         world.exec(|mut creator: UiCreator<'_>| {
@@ -336,7 +341,7 @@ impl SimpleState for RoomState {
                     WriteStorage<'_, TileMap<RoomTile>>,
                     ReadStorage<'_, sanity_lib::assets::PairsHandle>,
                     Read<'_, AssetStorage<sanity_lib::assets::Pairs>>,
-                    ReadStorage<'_, sanity_lib::player::Player>,
+                    ReadStorage<'_, crate::component::Player>,
                 )| {
                     for player in (&players).join() {
                         for (map, pair) in (&mut maps, &pairs).join() {
@@ -374,7 +379,7 @@ impl SimpleState for RoomState {
                         WriteStorage<'_, TileMap<RoomTile>>,
                         ReadStorage<'_, sanity_lib::assets::PairsHandle>,
                         Read<'_, AssetStorage<sanity_lib::assets::Pairs>>,
-                        ReadStorage<'_, sanity_lib::player::Player>,
+                        ReadStorage<'_, crate::component::Player>,
                     )| {
                         for player in (&players).join() {
                             if player.pos.xy() < Point2::new(self.width - 3, self.height - 3)

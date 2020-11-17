@@ -23,7 +23,7 @@ impl<'a> System<'a> for MovementSystem {
         ReadStorage<'a, TileMap<RoomTile>>,
         WriteStorage<'a, Transform>,
         Read<'a, InputHandler<StringBindings>>,
-        WriteStorage<'a, sanity_lib::player::Player>,
+        WriteStorage<'a, crate::component::Player>,
         Read<'a, Time>,
     );
 

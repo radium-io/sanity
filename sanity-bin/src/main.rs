@@ -22,6 +22,8 @@ use amethyst::{
     Result,
 };
 
+mod component;
+mod resource;
 mod state;
 mod system;
 
@@ -54,6 +56,11 @@ fn main() -> Result<()> {
         .with(
             system::movement::MovementSystem::default(),
             "movement_system",
+            &["input_system"],
+        )
+        .with(
+            system::shooting::ShootingSystem::default(),
+            "shooting_system",
             &["input_system"],
         )
         .with(Processor::<sanity_lib::assets::Pairs>::new(), "", &[])
