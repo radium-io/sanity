@@ -1,17 +1,18 @@
 use amethyst::{
-    core::{math::Point3, timing::Time, Transform},
+    core::{math::Point3, timing::Time, Hidden, Transform},
     derive::SystemDesc,
     ecs::{
         prelude::{System, SystemData, WriteStorage},
         Entities, Join, ReadStorage,
     },
     input::{InputHandler, StringBindings},
-    renderer::SpriteRender,
+    renderer::{SpriteRender, Transparent},
     shred::{Read, ReadExpect},
     tiles::{Map, MapStorage, TileMap},
 };
 use bracket_pathfinding::prelude::Point;
 use core::time::Duration;
+use direction::Coord;
 use sanity_lib::tile::RoomTile;
 
 use crate::resource::Sprited;
@@ -37,6 +38,9 @@ impl<'a> System<'a> for ShootingSystem {
         WriteStorage<'a, SpriteRender>,
         Read<'a, Time>,
         ReadExpect<'a, crate::resource::Bullets>,
+        WriteStorage<'a, crate::component::MovementIntent>,
+        WriteStorage<'a, Transparent>,
+        WriteStorage<'a, Hidden>,
     );
 
     fn run(
@@ -51,10 +55,13 @@ impl<'a> System<'a> for ShootingSystem {
             mut sprites,
             time,
             bullet_res,
+            mut intents,
+            mut transparents,
+            mut hiddens,
         ): Self::SystemData,
     ) {
-        if time.absolute_time() - self.last_move > Duration::from_millis(100) {
-            for tilemap in (&tilemaps).join() {
+        for tilemap in (&tilemaps).join() {
+            if time.absolute_time() - self.last_move > Duration::from_millis(300) {
                 for player in (&players).join() {
                     for shoot_dir in &[
                         ("shoot_up", ABOVE),
@@ -69,17 +76,87 @@ impl<'a> System<'a> for ShootingSystem {
                             if let Some(tile) = tilemap.get(&target_pt) {
                                 if tile.walkable {
                                     let mut t = Transform::default();
-                                    let world_pos = tilemap.to_world(&target_pt, None);
+                                    let world_pos = tilemap.to_world(&player.pos, None);
+
+                                    println!("{:?}", world_pos);
                                     t.set_translation(world_pos);
                                     entities
                                         .build_entity()
+                                        .with(Transparent, &mut transparents)
                                         .with(t, &mut transforms)
                                         .with(
                                             crate::component::Projectile::new(10),
                                             &mut projectiles,
                                         )
+                                        .with(
+                                            crate::component::MovementIntent {
+                                                dir: direction::CardinalDirection::from_unit_coord(
+                                                    Coord::new(shoot_dir.1.x, shoot_dir.1.y),
+                                                ),
+                                            },
+                                            &mut intents,
+                                        )
                                         .with(bullet_res.new_sprite(), &mut sprites)
+                                        .with(Hidden, &mut hiddens)
                                         .build();
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (e, projectile, transform, intent) in
+                (&entities, &mut projectiles, &mut transforms, &intents).join()
+            {
+                if let Ok(target) = tilemap.to_tile(transform.translation(), None) {
+                    // move existing bullets until collision
+                    match intent.dir {
+                        direction::CardinalDirection::North => {
+                            if let Some(tile) = tilemap.get(&Point3::new(target.x, target.y - 1, 0))
+                            {
+                                if tile.walkable {
+                                    //  TODO: check for collidable things
+                                    transform.move_up(tilemap.tile_dimensions().y as f32 / 3.);
+                                    hiddens.remove(e);
+                                } else {
+                                    entities.delete(e);
+                                }
+                            }
+                        }
+                        direction::CardinalDirection::East => {
+                            if let Some(tile) = tilemap.get(&Point3::new(target.x + 1, target.y, 0))
+                            {
+                                if tile.walkable {
+                                    //  TODO: check for collidable things
+                                    transform.move_right(tilemap.tile_dimensions().x as f32 / 3.);
+                                    hiddens.remove(e);
+                                } else {
+                                    entities.delete(e);
+                                }
+                            }
+                        }
+                        direction::CardinalDirection::South => {
+                            if let Some(tile) = tilemap.get(&Point3::new(target.x, target.y + 1, 0))
+                            {
+                                if tile.walkable {
+                                    //  TODO: check for collidable things
+                                    transform.move_down(tilemap.tile_dimensions().y as f32 / 3.);
+                                    hiddens.remove(e);
+                                } else {
+                                    entities.delete(e);
+                                }
+                            }
+                        }
+                        direction::CardinalDirection::West => {
+                            if let Some(tile) = tilemap.get(&Point3::new(target.x - 1, target.y, 0))
+                            {
+                                if tile.walkable {
+                                    //  TODO: check for collidable things
+                                    transform.move_left(tilemap.tile_dimensions().x as f32 / 3.);
+                                    hiddens.remove(e);
+                                } else {
+                                    entities.delete(e);
                                 }
                             }
                         }

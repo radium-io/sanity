@@ -4,7 +4,7 @@ use amethyst::{
 };
 
 pub struct MovementIntent {
-    dir: direction::CardinalDirection,
+    pub dir: direction::CardinalDirection,
 }
 
 impl Component for MovementIntent {

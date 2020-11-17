@@ -33,8 +33,7 @@ impl<'a> System<'a> for MovementSystem {
     );
 
     fn run(&mut self, (tilemaps, mut transforms, input, mut players, time): Self::SystemData) {
-        if time.absolute_time() - self.last_move < Duration::from_millis(100) {
-        } else {
+        if time.absolute_time() - self.last_move > Duration::from_millis(100) {
             for tilemap in (&tilemaps).join() {
                 for (player, transform) in (&mut players, &mut transforms).join() {
                     for dir in &[

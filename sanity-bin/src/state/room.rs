@@ -238,7 +238,7 @@ fn init_camera(world: &mut World) {
     };
 
     let mut ortho = CameraOrtho::normalized(CameraNormalizeMode::Contain);
-    let std = Camera::standard_2d(width, height);
+    let std = Camera::standard_2d(width / 2., height / 2.);
     ortho.world_coordinates = CameraOrthoWorldCoordinates {
         left: -width / 2.,
         right: width / 2.,

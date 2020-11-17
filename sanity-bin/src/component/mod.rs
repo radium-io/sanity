@@ -1,9 +1,9 @@
 mod health;
 mod movement;
-mod projectile;
 mod player;
+mod projectile;
 
 pub use health::Health;
 pub use movement::MovementIntent;
-pub use projectile::Projectile;
 pub use player::Player;
+pub use projectile::Projectile;
