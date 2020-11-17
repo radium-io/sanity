@@ -21,8 +21,8 @@ pub struct ShootingSystem {
     last_move: Duration,
 }
 
-const BELOW: Point = Point::constant(0, -1);
-const ABOVE: Point = Point::constant(0, 1);
+const BELOW: Point = Point::constant(0, 1);
+const ABOVE: Point = Point::constant(0, -1);
 const LEFT: Point = Point::constant(-1, 0);
 const RIGHT: Point = Point::constant(1, 0);
 
