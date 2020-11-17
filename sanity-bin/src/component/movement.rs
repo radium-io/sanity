@@ -1,7 +1,4 @@
-use amethyst::{
-    core::math::Point3,
-    ecs::{Component, DenseVecStorage, HashMapStorage},
-};
+use amethyst::ecs::{Component, DenseVecStorage};
 
 pub struct MovementIntent {
     pub dir: direction::CardinalDirection,

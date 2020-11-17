@@ -1,20 +1,13 @@
-use std::fmt::Debug;
-
 use amethyst::{
     assets::{AssetStorage, Handle, Loader, ProgressCounter, RonFormat},
     core::{
         math::{Point2, Point3, Vector3},
-        Named, Transform,
+        Named, Parent, Transform,
     },
     input::{is_close_requested, is_key_down},
     prelude::*,
-    renderer::{
-        camera::Camera,
-        formats::texture::ImageFormat,
-        sprite::{SpriteSheet, SpriteSheetFormat},
-        SpriteRender, Texture, Transparent,
-    },
-    tiles::{Map, MapStorage, TileMap},
+    renderer::{camera::Camera, SpriteRender, Transparent},
+    tiles::{MapStorage, TileMap},
     ui::UiCreator,
     utils::ortho_camera::{CameraNormalizeMode, CameraOrtho, CameraOrthoWorldCoordinates},
     window::ScreenDimensions,
@@ -22,6 +15,7 @@ use amethyst::{
 };
 use rand::prelude::*;
 use sanity_lib::{map::SanityMap, tile::RoomTile};
+use std::fmt::Debug;
 
 #[derive(Debug, Default)]
 pub struct RoomState {
@@ -231,7 +225,7 @@ fn gen_map(
 
 use amethyst::ecs::prelude::*;
 
-fn init_camera(world: &mut World) {
+fn init_camera(world: &mut World, player: Entity) {
     let (width, height) = {
         let dim = world.read_resource::<ScreenDimensions>();
         (dim.width(), dim.height())
@@ -253,6 +247,7 @@ fn init_camera(world: &mut World) {
         .with(Transform::from(Vector3::new(0., 0., 1000.)))
         .with(std)
         //.with(ortho)
+        .with(Parent { entity: player })
         .named("camera")
         .build();
 }
@@ -288,7 +283,7 @@ fn init_map(width: u32, height: u32, world: &mut World, progress: &mut ProgressC
         .build();
 }
 
-fn init_player(width: u32, height: u32, world: &mut World) {
+fn init_player(width: u32, height: u32, world: &mut World) -> Entity {
     let sprite_sheet = crate::resource::load_sprite_sheet(
         &world,
         "sprites/Space Cadet.png",
@@ -303,7 +298,7 @@ fn init_player(width: u32, height: u32, world: &mut World) {
         .with(Transparent)
         .with(t)
         .with(crate::component::Player::new(width / 2, height / 2))
-        .build();
+        .build()
 }
 
 impl SimpleState for RoomState {
@@ -322,11 +317,9 @@ impl SimpleState for RoomState {
         );
         world.insert(crate::resource::Bullets { sheet });
 
-        init_camera(world);
-
+        let player = init_player(self.width, self.height, world);
+        init_camera(world, player);
         init_map(self.width, self.height, world, &mut self.progress_counter);
-
-        init_player(self.width, self.height, world);
 
         // FIXME: move to global state?
         world.exec(|mut creator: UiCreator<'_>| {

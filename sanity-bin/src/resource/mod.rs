@@ -1,6 +1,6 @@
 use amethyst::{
     assets::{AssetStorage, Handle, Loader},
-    ecs::{prelude::Entity, World},
+    ecs::{World},
     prelude::WorldExt,
     renderer::{ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture},
 };
