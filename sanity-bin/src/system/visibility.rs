@@ -26,7 +26,9 @@ impl<'a> System<'a> for VisibilitySystem {
                 let dim = tilemap.dimensions().clone();
                 let clone = tilemap.clone();
                 let my_map = SanityMap(&clone);
-                let curr_tile = tilemap.to_tile(&transform.translation().xy().to_homogeneous(), None).unwrap();
+                let curr_tile = tilemap
+                    .to_tile(&transform.translation().xy().to_homogeneous(), None)
+                    .unwrap();
                 let fov = field_of_view_set(Point::new(curr_tile.x, curr_tile.y), 4, &my_map);
 
                 for x in 0..dim.x {

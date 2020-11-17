@@ -69,7 +69,9 @@ impl<'a> System<'a> for ShootingSystem {
                         if input.action_is_down(shoot_dir.0).unwrap_or(false) {
                             self.last_move = time.absolute_time();
 
-                            let player_pos = tilemap.to_tile(&transform.translation().xy().to_homogeneous(), None).unwrap();
+                            let player_pos = tilemap
+                                .to_tile(&transform.translation().xy().to_homogeneous(), None)
+                                .unwrap();
                             let spawn_pos = Point::new(player_pos.x, player_pos.y) + shoot_dir.1;
                             let target_pt = Point3::new(spawn_pos.x as u32, spawn_pos.y as u32, 0);
                             if let Some(tile) = tilemap.get(&target_pt) {
@@ -95,7 +97,6 @@ impl<'a> System<'a> for ShootingSystem {
                     }
                 }
             }
-            }
         }
     }
-
+}

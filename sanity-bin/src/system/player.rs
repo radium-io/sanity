@@ -1,5 +1,5 @@
 use amethyst::{
-    core::{math::Point3, timing::Time, Transform},
+    core::timing::Time,
     derive::SystemDesc,
     ecs::{
         prelude::{System, SystemData, WriteStorage},
@@ -7,11 +7,8 @@ use amethyst::{
     },
     input::{InputHandler, StringBindings},
     shred::Read,
-    tiles::{Map, MapStorage, TileMap},
 };
-use bracket_pathfinding::prelude::Point;
 use core::time::Duration;
-use sanity_lib::tile::RoomTile;
 
 #[derive(Default, SystemDesc)]
 pub struct PlayerSystem {
@@ -29,11 +26,11 @@ impl<'a> System<'a> for PlayerSystem {
 
     fn run(&mut self, (input, players, mut intents, time, entities): Self::SystemData) {
         for (entity, _) in (&entities, &players).join() {
+            // stop all movement intents from last player action
             intents.remove(entity);
-        }
 
-        if time.absolute_time() - self.last_move > Duration::from_millis(100) {
-            for (entity, _) in (&entities, &players).join() {
+            // check if player is attempting to move again
+            if time.absolute_time() - self.last_move > Duration::from_millis(150) {
                 for dir in &[
                     ("up", direction::CardinalDirection::North),
                     ("down", direction::CardinalDirection::South),
@@ -43,7 +40,7 @@ impl<'a> System<'a> for PlayerSystem {
                     if input.action_is_down(dir.0).unwrap_or(false) {
                         println!("{:?}", dir.0);
                         self.last_move = time.absolute_time();
-                        intents.insert(entity, crate::component::MovementIntent { dir: dir.1 });
+                        intents.insert(entity, crate::component::MovementIntent { dir: dir.1 }).unwrap();
                     }
                 }
             }
