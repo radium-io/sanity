@@ -3,7 +3,7 @@ use amethyst::{
     derive::SystemDesc,
     ecs::{
         prelude::{System, SystemData, WriteStorage},
-        Join, ReadStorage, Entities
+        Entities, Join, ReadStorage,
     },
     tiles::{Map, MapStorage, TileMap},
 };
@@ -22,7 +22,10 @@ impl<'a> System<'a> for MovementSystem {
         WriteStorage<'a, crate::component::Collision>,
     );
 
-    fn run(&mut self, (entities, tilemaps, mut transforms,  intents, mut collisions): Self::SystemData) {
+    fn run(
+        &mut self,
+        (entities, tilemaps, mut transforms, intents, mut collisions): Self::SystemData,
+    ) {
         for tilemap in (&tilemaps).join() {
             for (entity, transform, intent) in (&entities, &mut transforms, &intents).join() {
                 let c = intent.dir.coord();
@@ -42,7 +45,7 @@ impl<'a> System<'a> for MovementSystem {
                         );
                     } else {
                         // TODO: add a Collision component to the entity and resolve behavior in collision_system
-                        collisions.insert(entity, crate::component::Collision{ location: target});
+                        collisions.insert(entity, crate::component::Collision { location: target });
                     }
                 }
             }

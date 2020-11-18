@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 pub struct Pairs {
     pub ns: Vec<(usize, usize)>,
     pub we: Vec<(usize, usize)>,
+    pub walkable: Vec<usize>,
+    pub null: usize, // unwalkable empty space tile
 }
 
 pub type PairsHandle = Handle<Pairs>;

@@ -1,11 +1,21 @@
+use crate::tile::RoomTile;
 use amethyst::{
     core::math::Point3,
     tiles::{Map, MapStorage, TileMap},
 };
 use bracket_pathfinding::prelude::*;
+use strum_macros::EnumCount;
 
-use crate::tile::RoomTile;
 pub struct SanityMap<'a>(pub &'a TileMap<RoomTile>);
+
+// these are layers to composit on the map when generating
+#[derive(EnumCount)]
+pub enum MapLayer {
+    Floor,      // these tiles are all walkable
+    Walls,      // this layer includes walkable areas and non-walkable
+    Obstacles,  // none of these are walkable and should impede movement
+    Decoration, // these do not affect movement and are purely decoration (TODO: physics?)
+}
 
 impl<'a> SanityMap<'a> {
     fn valid_exit(&self, loc: Point, delta: Point) -> Option<usize> {

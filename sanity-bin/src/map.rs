@@ -1,8 +1,11 @@
-use amethyst::{core::math::Point3, tiles::{MapStorage, TileMap}};
+use amethyst::{
+    core::math::Point3,
+    tiles::{MapStorage, TileMap},
+};
 use bracket_pathfinding::prelude::*;
 use direction::Coord;
-use rand::{Rng, thread_rng};
-use sanity_lib::{tile::RoomTile, map::SanityMap};
+use rand::{thread_rng, Rng};
+use sanity_lib::{map::SanityMap, tile::RoomTile};
 use wfc::{PatternDescription, PatternTable};
 
 use wfc::*;
@@ -33,7 +36,20 @@ impl ForbidPattern for ForbidCorner {
     }
 }
 
-
+fn to_vec(p: &Vec<(usize, usize)>, idx: usize, max: usize) -> (Vec<u32>, Vec<u32>) {
+    (
+        p.clone()
+            .into_iter()
+            .filter(|p| p.1 == idx && p.0 < max)
+            .map(|p| p.0 as u32)
+            .collect(),
+        p.clone()
+            .into_iter()
+            .filter(|p| p.0 == idx && p.1 < max)
+            .map(|p| p.1 as u32)
+            .collect(),
+    )
+}
 
 pub fn gen_map(
     map: &mut TileMap<RoomTile>,
@@ -46,43 +62,10 @@ pub fn gen_map(
 
     let max_tiles = 115;
     for idx in 0..max_tiles {
-        let mut n: Vec<u32> = pairs
-            .ns
-            .clone()
-            .into_iter()
-            .filter(|p| p.1 == idx && p.0 < max_tiles)
-            .map(|p| p.0 as u32)
-            .collect();
-        let mut s: Vec<u32> = pairs
-            .ns
-            .clone()
-            .into_iter()
-            .filter(|p| p.0 == idx && p.1 < max_tiles)
-            .map(|p| p.1 as u32)
-            .collect();
-
-        let mut w: Vec<u32> = pairs
-            .we
-            .clone()
-            .into_iter()
-            .filter(|p| p.1 == idx && p.0 < max_tiles)
-            .map(|p| p.0 as u32)
-            .collect();
-
-        let mut e: Vec<u32> = pairs
-            .we
-            .clone()
-            .into_iter()
-            .filter(|p| p.0 == idx && p.1 < max_tiles)
-            .map(|p| p.1 as u32)
-            .collect();
+        let (mut n, mut s) = to_vec(&pairs.ns, idx, max_tiles);
+        let (mut w, mut e) = to_vec(&pairs.we, idx, max_tiles);
 
         let mut wt = std::num::NonZeroU32::new(50);
-
-        if idx == 6 {
-            // FIXME: floor weighting
-            wt = std::num::NonZeroU32::new(100);
-        }
 
         if (n.len() > 0 || s.len() > 0) && (w.len() == 0 || e.len() == 0) {
             w.push(idx as u32);
@@ -146,20 +129,7 @@ pub fn gen_map(
                     .expect(&format!("Chosen tile for coord {:?}.", cell)) as usize,
             );
             tile.sprite = s;
-            if s == Some(6)
-                || s == Some(36)
-                || s == Some(97)
-                || s == Some(98)
-                || s == Some(0)
-                || s == Some(1)
-                || s == Some(2)
-                || s == Some(81)
-                || s == Some(82)
-            {
-                tile.walkable = true;
-            } else {
-                tile.walkable = false;
-            }
+            tile.walkable = pairs.walkable.contains(&s.unwrap());
             s
         } else {
             None
@@ -182,7 +152,7 @@ pub fn gen_map(
             if let Some(tile) = map.get_mut(&Point3::new(x, y, 0)) {
                 if tile.walkable {
                     if dijkstra.map[my_map.point2d_to_index(p)] == std::f32::MAX {
-                        tile.sprite = Some(17);
+                        tile.sprite = Some(pairs.null);
                         tile.walkable = false;
 
                         // TODO: remove surrounding tiles as well

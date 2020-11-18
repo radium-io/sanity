@@ -40,7 +40,9 @@ impl<'a> System<'a> for PlayerSystem {
                     if input.action_is_down(dir.0).unwrap_or(false) {
                         println!("{:?}", dir.0);
                         self.last_move = time.absolute_time();
-                        intents.insert(entity, crate::component::MovementIntent { dir: dir.1 }).unwrap();
+                        intents
+                            .insert(entity, crate::component::MovementIntent { dir: dir.1 })
+                            .unwrap();
                     }
                 }
             }

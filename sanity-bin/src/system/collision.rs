@@ -3,7 +3,7 @@ use amethyst::{
     derive::SystemDesc,
     ecs::{
         prelude::{System, SystemData, WriteStorage},
-        Join, ReadStorage, Entities
+        Entities, Join, ReadStorage,
     },
     tiles::{Map, MapStorage, TileMap},
 };

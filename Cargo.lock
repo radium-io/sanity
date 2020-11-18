@@ -3426,6 +3426,7 @@ dependencies = [
  "ron 0.6.2",
  "sanity-lib",
  "serde",
+ "strum",
  "wfc",
 ]
 
@@ -3436,6 +3437,8 @@ dependencies = [
  "amethyst",
  "bracket-pathfinding",
  "serde",
+ "strum",
+ "strum_macros",
 ]
 
 [[package]]
@@ -3733,6 +3736,24 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "fd0a4829a5c591dc24a944a736d6b1e4053e51339a79fd5d4702c4c999a9c45e"
 dependencies = [
  "lock_api",
+]
+
+[[package]]
+name = "strum"
+version = "0.19.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b89a286a7e3b5720b9a477b23253bc50debac207c8d21505f8e70b36792f11b5"
+
+[[package]]
+name = "strum_macros"
+version = "0.19.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e61bb0be289045cb80bfce000512e32d09f8337e54c186725da381377ad1f8d5"
+dependencies = [
+ "heck",
+ "proc-macro2 1.0.24",
+ "quote 1.0.7",
+ "syn 1.0.48",
 ]
 
 [[package]]

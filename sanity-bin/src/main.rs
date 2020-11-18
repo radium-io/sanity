@@ -23,10 +23,10 @@ use amethyst::{
 };
 
 mod component;
+mod map;
 mod resource;
 mod state;
 mod system;
-mod map;
 
 use amethyst::{
     assets::{HotReloadBundle, HotReloadStrategy},
@@ -69,7 +69,11 @@ fn main() -> Result<()> {
             "movement_system",
             &["input_system", "player_system", "shooting_system"],
         )
-        .with(system::collision::CollisionSystem::default(), "collision_system", &["movement_system"])
+        .with(
+            system::collision::CollisionSystem::default(),
+            "collision_system",
+            &["movement_system"],
+        )
         .with(Processor::<sanity_lib::assets::Pairs>::new(), "", &[])
         .with_bundle(
             RenderingBundle::<DefaultBackend>::new()

@@ -13,6 +13,7 @@ use amethyst::{
     window::ScreenDimensions,
     winit,
 };
+use direction::Coord;
 use rand::prelude::*;
 use sanity_lib::{map::SanityMap, tile::RoomTile};
 use std::fmt::Debug;
@@ -35,8 +36,8 @@ impl RoomState {
     }
 }
 
-
 use amethyst::ecs::prelude::*;
+use strum::EnumCount;
 
 fn init_camera(world: &mut World, player: Entity) {
     let (width, height) = {
@@ -70,8 +71,8 @@ fn init_map(width: u32, height: u32, world: &mut World, progress: &mut ProgressC
         crate::resource::load_sprite_sheet(&world, "Dungeon_Tileset.png", "Dungeon_Tileset.ron");
 
     let map = TileMap::<RoomTile>::new(
-        Vector3::new(width, height, 1), // The dimensions of the map
-        Vector3::new(32, 32, 1),        // The dimensions of each tile
+        Vector3::new(width, height, sanity_lib::map::MapLayer::COUNT as u32), // The dimensions of the map
+        Vector3::new(32, 32, 1), // The dimensions of each tile
         Some(spritesheet_handle),
     );
 
@@ -103,7 +104,7 @@ fn init_player(width: u32, height: u32, world: &mut World) -> Entity {
         "sprites/Space Cadet.ron",
     );
     let mut t = Transform::default();
-    t.move_backward(500.);
+    t.move_backward(10.);
     t.move_up(8.);
     world
         .create_entity()
