@@ -26,6 +26,7 @@ mod component;
 mod resource;
 mod state;
 mod system;
+mod map;
 
 use amethyst::{
     assets::{HotReloadBundle, HotReloadStrategy},
