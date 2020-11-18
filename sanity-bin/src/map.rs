@@ -123,16 +123,17 @@ pub fn gen_map(
     wfc_run.collapse_retrying(wfc::retry::Forever, &mut rng);
 
     wave.grid().map_ref_with_coord(|c, cell| {
-        if let Some(mut tile) = map.get_mut(&Point3::new(c.x as u32, c.y as u32, 0)) {
+        if let Some(mut tile) = map.get_mut(&Point3::new(
+            c.x as u32,
+            c.y as u32,
+            sanity_lib::map::MapLayer::Walls as u32,
+        )) {
             let s = Some(
                 cell.chosen_pattern_id()
                     .expect(&format!("Chosen tile for coord {:?}.", cell)) as usize,
             );
             tile.sprite = s;
             tile.walkable = pairs.walkable.contains(&s.unwrap());
-            s
-        } else {
-            None
         }
     });
 
@@ -149,7 +150,9 @@ pub fn gen_map(
     for x in 0..width {
         for y in 0..height {
             let p = Point::new(x, y);
-            if let Some(tile) = map.get_mut(&Point3::new(x, y, 0)) {
+            if let Some(tile) =
+                map.get_mut(&Point3::new(x, y, sanity_lib::map::MapLayer::Walls as u32))
+            {
                 if tile.walkable {
                     if dijkstra.map[my_map.point2d_to_index(p)] == std::f32::MAX {
                         tile.sprite = Some(pairs.null);
@@ -157,6 +160,11 @@ pub fn gen_map(
 
                         // TODO: remove surrounding tiles as well
                     }
+                }
+                if let Some(floor) =
+                    map.get_mut(&Point3::new(x, y, sanity_lib::map::MapLayer::Floor as u32))
+                {
+                    floor.sprite = Some(88);
                 }
             }
         }

@@ -6,6 +6,7 @@ use amethyst::{
     ecs::{ReadStorage, SystemData, World},
     input::{InputBundle, StringBindings},
     prelude::*,
+    renderer::palette,
     renderer::{
         bundle::{RenderOrder, RenderPlan, Target},
         plugins::{RenderFlat2D, RenderToWindow},
@@ -37,6 +38,20 @@ fn main() -> Result<()> {
     amethyst::start_logger(Default::default());
 
     let app_root = application_root_dir()?;
+
+    let your_red: f32 = 9.;
+    let your_green: f32 = 9.;
+    let your_blue: f32 = 9.;
+    let your_alpha: f32 = 1.0;
+
+    let (r, g, b, a) = palette::Srgba::new(
+        your_red / 255.,
+        your_green / 255.,
+        your_blue / 255.,
+        your_alpha,
+    )
+    .into_linear()
+    .into_components();
 
     let game_data = GameDataBuilder::default()
         .with(CameraOrthoSystem::default(), "ortho_camera_system", &[])
@@ -79,7 +94,7 @@ fn main() -> Result<()> {
             RenderingBundle::<DefaultBackend>::new()
                 .with_plugin(
                     RenderToWindow::from_config_path(app_root.join("config/display_config.ron"))?
-                        .with_clear([0.34, 0.36, 0.52, 1.0]),
+                        .with_clear([r, g, b, a]),
                 )
                 .with_plugin(RenderUi::default())
                 .with_plugin(RenderFlat2D::default())
@@ -151,7 +166,7 @@ impl<B: Backend, T: Tile, E: CoordinateEncoder, Z: DrawTiles2DBounds> RenderPlug
     ) -> Result<()> {
         plan.extend_target(self.target, |ctx| {
             ctx.add(
-                RenderOrder::Transparent,
+                RenderOrder::BeforeTransparent, // FIXME: I want some tiles behind player and some above
                 DrawTiles2DDesc::<T, E, Z>::default().builder(),
             )?;
             Ok(())

@@ -45,20 +45,20 @@ fn init_camera(world: &mut World, player: Entity) {
         (dim.width(), dim.height())
     };
 
-    let mut ortho = CameraOrtho::normalized(CameraNormalizeMode::Contain);
+    //let mut ortho = CameraOrtho::normalized(CameraNormalizeMode::Contain);
     let std = Camera::standard_2d(width / 2., height / 2.);
-    ortho.world_coordinates = CameraOrthoWorldCoordinates {
+    /*ortho.world_coordinates = CameraOrthoWorldCoordinates {
         left: -width / 2.,
         right: width / 2.,
         top: height / 2.,
         bottom: -height / 2.,
         near: 0.125,
         far: 2000.,
-    };
+    };*/
 
     world
         .create_entity()
-        .with(Transform::from(Vector3::new(0., 0., 1000.)))
+        .with(Transform::from(Vector3::new(0., 0., 100.)))
         .with(std)
         //.with(ortho)
         .with(Parent { entity: player })
@@ -88,7 +88,7 @@ fn init_map(width: u32, height: u32, world: &mut World, progress: &mut ProgressC
     };
 
     let mut c_t = Transform::default();
-    c_t.move_forward(5.);
+    c_t.move_backward(5.);
     world
         .create_entity()
         .with(map)
@@ -104,7 +104,7 @@ fn init_player(width: u32, height: u32, world: &mut World) -> Entity {
         "sprites/Space Cadet.ron",
     );
     let mut t = Transform::default();
-    t.move_backward(10.);
+    t.move_forward(2.);
     t.move_up(8.);
     world
         .create_entity()
@@ -157,7 +157,7 @@ impl SimpleState for RoomState {
                                 assets.get(pair).unwrap(),
                                 self.width,
                                 self.height,
-                                Coord::new(player.pos.x as i32, player.pos.y as i32),
+                                Coord::new(player.pos.x as i32, player.pos.y as i32), // FIXME: not using this any more so map gen can be borken
                             );
                         }
                     }

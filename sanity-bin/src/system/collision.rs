@@ -16,17 +16,13 @@ pub struct CollisionSystem {}
 impl<'a> System<'a> for CollisionSystem {
     type SystemData = (
         Entities<'a>,
-        ReadStorage<'a, TileMap<RoomTile>>,
-        ReadStorage<'a, Transform>,
         ReadStorage<'a, crate::component::Collision>,
         ReadStorage<'a, crate::component::Projectile>,
     );
 
-    fn run(&mut self, (entities, tilemaps, transforms, collisions, projectiles): Self::SystemData) {
-        for tilemap in (&tilemaps).join() {
-            for (entity, collision, projectile) in (&entities, &collisions, &projectiles).join() {
-                entities.delete(entity);
-            }
+    fn run(&mut self, (entities, collisions, projectiles): Self::SystemData) {
+        for (entity, _, _) in (&entities, &collisions, &projectiles).join() {
+            entities.delete(entity);
         }
     }
 }

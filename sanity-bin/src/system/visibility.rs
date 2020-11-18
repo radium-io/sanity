@@ -1,4 +1,5 @@
 use amethyst::{
+    core::math::Vector3,
     core::{math::Point3, timing::Time, Transform},
     derive::SystemDesc,
     ecs::{
@@ -26,16 +27,30 @@ impl<'a> System<'a> for VisibilitySystem {
                 let dim = tilemap.dimensions().clone();
                 let clone = tilemap.clone();
                 let my_map = SanityMap(&clone);
+                let trans = transform.translation();
                 let curr_tile = tilemap
-                    .to_tile(&transform.translation().xy().to_homogeneous(), None)
+                    .to_tile(&Vector3::new(trans.x, trans.y, 0.), None)
                     .unwrap();
                 let fov = field_of_view_set(Point::new(curr_tile.x, curr_tile.y), 4, &my_map);
-
-                for x in 0..dim.x {
-                    for y in 0..dim.y {
-                        let p = Point::new(x, y);
-                        if let Some(tile) = tilemap.get_mut(&Point3::new(x, y, 0)) {
-                            tile.visible = fov.contains(&p);
+                for z in 0..2 {
+                    for x in 0..dim.x {
+                        for y in 0..dim.y {
+                            let p = Point::new(x, y);
+                            if let Some(tile) = tilemap.get_mut(&Point3::new(x, y, z)) {
+                                let vis = fov.contains(&p);
+                                tile.visible = vis;
+                                if vis {
+                                    tile.visited = true;
+                                    if !tile.walkable {
+                                        if let Some(tile) =
+                                            tilemap.get_mut(&Point3::new(x, y - 1, z))
+                                        {
+                                            tile.visible = vis;
+                                            tile.visited = true;
+                                        }
+                                    }
+                                }
+                            }
                         }
                     }
                 }

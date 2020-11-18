@@ -73,7 +73,11 @@ impl<'a> System<'a> for ShootingSystem {
                                 .to_tile(&transform.translation().xy().to_homogeneous(), None)
                                 .unwrap();
                             let spawn_pos = Point::new(player_pos.x, player_pos.y) + shoot_dir.1;
-                            let target_pt = Point3::new(spawn_pos.x as u32, spawn_pos.y as u32, 0);
+                            let target_pt = Point3::new(
+                                spawn_pos.x as u32,
+                                spawn_pos.y as u32,
+                                sanity_lib::map::MapLayer::Walls as u32,
+                            );
                             if let Some(tile) = tilemap.get(&target_pt) {
                                 if tile.walkable {
                                     let mut t = Transform::default();

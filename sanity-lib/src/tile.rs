@@ -19,6 +19,7 @@ pub struct RoomTile {
     pub candidates: Candidates,
     pub walkable: bool,
     pub tint: Option<palette::Srgba>,
+    pub visited: bool,
 }
 
 impl Tile for RoomTile {
@@ -28,7 +29,11 @@ impl Tile for RoomTile {
         // this could be stored on struct or we can determine it later but we would need to know
         // how many doors are in the room (which means need ref to room)
         // also would probably have some animation for change
-        self.sprite
+        if self.visited {
+            self.sprite
+        } else {
+            Some(17)
+        }
     }
 
     fn tint(&self, _: Point3<u32>, _: &World) -> palette::Srgba {
@@ -38,7 +43,7 @@ impl Tile for RoomTile {
             if self.visible {
                 palette::Srgba::new(1., 1., 1., 1.)
             } else {
-                palette::Srgba::new(0.1, 0.1, 0.1, 0.9)
+                palette::Srgba::new(0.1, 0.1, 0.1, 1.)
             }
         }
     }

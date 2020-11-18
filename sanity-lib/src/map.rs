@@ -11,10 +11,10 @@ pub struct SanityMap<'a>(pub &'a TileMap<RoomTile>);
 // these are layers to composit on the map when generating
 #[derive(EnumCount)]
 pub enum MapLayer {
-    Floor,      // these tiles are all walkable
-    Walls,      // this layer includes walkable areas and non-walkable
-    Obstacles,  // none of these are walkable and should impede movement
-    Decoration, // these do not affect movement and are purely decoration (TODO: physics?)
+    Floor, // these tiles are all walkable
+    Walls, // this layer includes walkable areas and non-walkable
+           //Obstacles,  // none of these are walkable and should impede movement
+           //Decoration, // these do not affect movement and are purely decoration (TODO: physics?)
 }
 
 impl<'a> SanityMap<'a> {
@@ -23,10 +23,11 @@ impl<'a> SanityMap<'a> {
         if self.in_bounds(destination) {
             let idx = self.point2d_to_index(destination);
 
-            match self
-                .0
-                .get(&Point3::new(destination.x as u32, destination.y as u32, 0))
-            {
+            match self.0.get(&Point3::new(
+                destination.x as u32,
+                destination.y as u32,
+                MapLayer::Walls as u32,
+            )) {
                 Some(tile) if tile.walkable => Some(idx),
                 _ => None,
             }
@@ -39,7 +40,10 @@ impl<'a> SanityMap<'a> {
 impl<'a> BaseMap for SanityMap<'a> {
     fn is_opaque(&self, idx: usize) -> bool {
         let p = self.index_to_point2d(idx);
-        if let Some(tile) = self.0.get(&Point3::new(p.x as u32, p.y as u32, 0)) {
+        if let Some(tile) = self
+            .0
+            .get(&Point3::new(p.x as u32, p.y as u32, MapLayer::Walls as u32))
+        {
             !tile.walkable
         } else {
             true

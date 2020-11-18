@@ -35,7 +35,11 @@ impl<'a> System<'a> for MovementSystem {
                     .unwrap();
                 let target = Point::new(curr_tile.x, curr_tile.y) + p;
 
-                if let Some(tile) = tilemap.get(&Point3::new(target.x as u32, target.y as u32, 0)) {
+                if let Some(tile) = tilemap.get(&Point3::new(
+                    target.x as u32,
+                    target.y as u32,
+                    sanity_lib::map::MapLayer::Walls as u32,
+                )) {
                     if tile.walkable {
                         transform
                             .prepend_translation_x(c.x as f32 * tilemap.tile_dimensions().x as f32);
