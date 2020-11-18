@@ -6,7 +6,7 @@ use amethyst::{
 use bracket_pathfinding::prelude::*;
 use strum_macros::EnumCount;
 
-pub struct SanityMap<'a>(pub &'a TileMap<RoomTile>);
+pub struct SanityMap(pub TileMap<RoomTile>);
 
 // these are layers to composit on the map when generating
 #[derive(EnumCount)]
@@ -17,7 +17,7 @@ pub enum MapLayer {
            //Decoration, // these do not affect movement and are purely decoration (TODO: physics?)
 }
 
-impl<'a> SanityMap<'a> {
+impl SanityMap {
     fn valid_exit(&self, loc: Point, delta: Point) -> Option<usize> {
         let destination = loc + delta;
         if self.in_bounds(destination) {
@@ -37,7 +37,7 @@ impl<'a> SanityMap<'a> {
     }
 }
 
-impl<'a> BaseMap for SanityMap<'a> {
+impl BaseMap for SanityMap {
     fn is_opaque(&self, idx: usize) -> bool {
         let p = self.index_to_point2d(idx);
         if let Some(tile) = self
@@ -88,7 +88,7 @@ impl<'a> BaseMap for SanityMap<'a> {
     }
 }
 
-impl<'a> Algorithm2D for SanityMap<'a> {
+impl Algorithm2D for SanityMap {
     fn dimensions(&self) -> Point {
         let dim = self.0.dimensions();
         Point::new(dim.x, dim.y)

@@ -1,10 +1,12 @@
 use amethyst::{
     core::math::Point3,
+    ecs::Entities,
+    shred::World,
     tiles::{MapStorage, TileMap},
 };
 use bracket_pathfinding::prelude::*;
 use direction::Coord;
-use rand::{thread_rng, Rng};
+use rand::{random, thread_rng, Rng};
 use sanity_lib::{map::SanityMap, tile::RoomTile};
 use wfc::{PatternDescription, PatternTable};
 
@@ -137,8 +139,8 @@ pub fn gen_map(
         }
     });
 
-    let clone = map.clone();
-    let my_map = SanityMap(&clone);
+    let mut clone = map.clone();
+    let mut my_map = SanityMap(clone);
     let dijkstra = DijkstraMap::new(
         width,
         height,
@@ -155,6 +157,7 @@ pub fn gen_map(
             {
                 if tile.walkable {
                     if dijkstra.map[my_map.point2d_to_index(p)] == std::f32::MAX {
+                        println!("Removing unreachable {:?}", p);
                         tile.sprite = Some(pairs.null);
                         tile.walkable = false;
 

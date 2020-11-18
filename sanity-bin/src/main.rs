@@ -6,9 +6,9 @@ use amethyst::{
     ecs::{ReadStorage, SystemData, World},
     input::{InputBundle, StringBindings},
     prelude::*,
-    renderer::palette,
     renderer::{
         bundle::{RenderOrder, RenderPlan, Target},
+        palette,
         plugins::{RenderFlat2D, RenderToWindow},
         types::DefaultBackend,
         Backend, Factory, RenderGroupDesc, RenderPlugin, RenderingBundle, SpriteSheet, Texture,
@@ -87,6 +87,11 @@ fn main() -> Result<()> {
         .with(
             system::collision::CollisionSystem::default(),
             "collision_system",
+            &["movement_system"],
+        )
+        .with(
+            system::enemies::EnemySystem::default(),
+            "enemy_system",
             &["movement_system"],
         )
         .with(Processor::<sanity_lib::assets::Pairs>::new(), "", &[])

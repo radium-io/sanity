@@ -1,6 +1,9 @@
 use amethyst::{
-    core::math::Vector3,
-    core::{math::Point3, timing::Time, Transform},
+    core::{
+        math::{Point3, Vector3},
+        timing::Time,
+        Transform,
+    },
     derive::SystemDesc,
     ecs::{
         prelude::{System, SystemData, WriteStorage},
@@ -25,8 +28,8 @@ impl<'a> System<'a> for VisibilitySystem {
         for (player, transform) in (&players, &transforms).join() {
             for tilemap in (&mut tilemaps).join() {
                 let dim = tilemap.dimensions().clone();
-                let clone = tilemap.clone();
-                let my_map = SanityMap(&clone);
+                let mut clone = tilemap.clone();
+                let my_map = SanityMap(clone);
                 let trans = transform.translation();
                 let curr_tile = tilemap
                     .to_tile(&Vector3::new(trans.x, trans.y, 0.), None)

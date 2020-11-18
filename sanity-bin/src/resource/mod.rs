@@ -34,3 +34,13 @@ impl Sprited for Bullets {
         SpriteRender::new(self.sheet.clone(), 0)
     }
 }
+
+pub struct Enemies {
+    pub sheet: Handle<SpriteSheet>,
+}
+
+impl Sprited for Enemies {
+    fn new_sprite(&self) -> SpriteRender {
+        SpriteRender::new(self.sheet.clone(), 0)
+    }
+}

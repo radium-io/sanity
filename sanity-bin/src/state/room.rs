@@ -124,12 +124,21 @@ impl SimpleState for RoomState {
         world.register::<Handle<sanity_lib::assets::Pairs>>();
 
         // insert resources in to world
-        let sheet = crate::resource::load_sprite_sheet(
-            &world,
-            "sprites/bullets.png",
-            "sprites/bullets.ron",
-        );
-        world.insert(crate::resource::Bullets { sheet });
+        world.insert(crate::resource::Bullets {
+            sheet: crate::resource::load_sprite_sheet(
+                &world,
+                "sprites/bullets.png",
+                "sprites/bullets.ron",
+            ),
+        });
+
+        world.insert(crate::resource::Enemies {
+            sheet: crate::resource::load_sprite_sheet(
+                &world,
+                "sprites/Slime Sprite Sheet.png",
+                "sprites/slime.ron",
+            ),
+        });
 
         let player = init_player(self.width, self.height, world);
         init_camera(world, player);
