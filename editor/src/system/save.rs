@@ -81,6 +81,9 @@ impl<'s> System<'s> for SaveSystem {
                     }
                 }
 
+                p.walkable = self.pairs.clone().unwrap().walkable;
+                p.null = self.pairs.clone().unwrap().null;
+
                 if input.key_is_down(winit::VirtualKeyCode::S) && !self.saving {
                     let s =
                         ron::ser::to_string_pretty(&p, ron::ser::PrettyConfig::default()).unwrap();
