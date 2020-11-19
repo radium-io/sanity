@@ -1,6 +1,9 @@
-use std::cmp::Ordering;
-
+use crate::{component::Position, resource::Animated};
 use amethyst::{
+    animation::{
+        get_animation_set, AnimationBundle, AnimationCommand, AnimationControlSet, AnimationSet,
+        AnimationSetPrefab, EndControl,
+    },
     core::{math::Point3, Hidden, Transform},
     derive::SystemDesc,
     ecs::{
@@ -8,14 +11,13 @@ use amethyst::{
         Entities, Join, LazyUpdate, ReadStorage,
     },
     prelude::*,
-    renderer::Transparent,
+    renderer::{SpriteRender, Transparent},
     shred::{Read, ReadExpect},
     tiles::{Map, MapStorage, TileMap},
 };
 use bracket_pathfinding::prelude::{Point, *};
 use sanity_lib::{map::SanityMap, tile::RoomTile};
-
-use crate::{component::Position, resource::Sprited};
+use std::cmp::Ordering;
 
 #[derive(Default, SystemDesc)]
 pub struct EnemySystem {
@@ -32,12 +34,36 @@ impl<'a> System<'a> for EnemySystem {
         ReadExpect<'a, crate::resource::Enemies>,
         ReadStorage<'a, crate::component::Enemy>,
         ReadStorage<'a, crate::component::Position>,
+        ReadStorage<'a, AnimationSet<usize, SpriteRender>>,
+        WriteStorage<'a, AnimationControlSet<usize, SpriteRender>>,
     );
 
     fn run(
         &mut self,
-        (entities, mut tilemaps, players, transforms, lazy, enemies_res, enemies, positions): Self::SystemData,
+        (
+            entities,
+            mut tilemaps,
+            players,
+            transforms,
+            lazy,
+            enemies_res,
+            enemies,
+            positions,
+            animation_sets,
+            mut control_sets,
+        ): Self::SystemData,
     ) {
+        for (entity, animation_set, _) in (&entities, &animation_sets, &enemies).join() {
+            let control_set = get_animation_set(&mut control_sets, entity).unwrap();
+            control_set.add_animation(
+                0,
+                &animation_set.get(&0).unwrap(),
+                EndControl::Loop(None),
+                1.0,
+                AnimationCommand::Start,
+            );
+        }
+
         if self.total_enemies < 1 {
             for tilemap in (&mut tilemaps).join() {
                 let my_map = SanityMap(tilemap);
@@ -88,14 +114,16 @@ impl<'a> System<'a> for EnemySystem {
                                     t.move_forward(2.);
                                     t.move_up(8.);
 
-                                    lazy.create_entity(&entities)
+                                    let entity = lazy
+                                        .create_entity(&entities)
                                         .with(crate::component::Enemy)
                                         .with(Transparent)
                                         .with(Hidden)
                                         .with(Position { pos: p })
                                         .with(t)
-                                        .with(enemies_res.new_sprite())
+                                        .with(enemies_res.new_animated_sprite())
                                         .build();
+
                                     self.total_enemies += 1;
                                     println!("Spawn at {:?}", p);
                                 }

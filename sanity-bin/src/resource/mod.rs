@@ -1,11 +1,16 @@
 use amethyst::{
-    assets::{AssetStorage, Handle, Loader},
+    assets::{AssetStorage, Handle, Loader, Prefab, PrefabLoader, ProgressCounter, RonFormat},
     ecs::World,
     prelude::WorldExt,
     renderer::{ImageFormat, SpriteRender, SpriteSheet, SpriteSheetFormat, Texture},
 };
 
-pub fn load_sprite_sheet(world: &World, png_path: &str, ron_path: &str) -> Handle<SpriteSheet> {
+pub fn load_sprite_sheet(
+    world: &World,
+    png_path: &str,
+    ron_path: &str,
+    prog: &mut ProgressCounter,
+) -> Handle<SpriteSheet> {
     let loader = world.read_resource::<Loader>();
     let texture_handle = loader.load(
         png_path,
@@ -16,13 +21,27 @@ pub fn load_sprite_sheet(world: &World, png_path: &str, ron_path: &str) -> Handl
     loader.load(
         ron_path,
         SpriteSheetFormat(texture_handle),
-        (),
+        prog,
         &world.read_resource::<AssetStorage<SpriteSheet>>(),
     )
 }
 
+pub fn load_anim_prefab(
+    world: &mut World,
+    prefab_path: &str,
+    prog: &mut ProgressCounter,
+) -> Handle<Prefab<crate::MyPrefabData>> {
+    world.exec(|loader: PrefabLoader<'_, crate::MyPrefabData>| {
+        loader.load(prefab_path, RonFormat, prog)
+    })
+}
+
 pub trait Sprited {
     fn new_sprite(&self) -> SpriteRender;
+}
+
+pub trait Animated {
+    fn new_animated_sprite(&self) -> Handle<Prefab<crate::MyPrefabData>>;
 }
 
 pub struct Bullets {
@@ -36,11 +55,11 @@ impl Sprited for Bullets {
 }
 
 pub struct Enemies {
-    pub sheet: Handle<SpriteSheet>,
+    pub anims: Handle<Prefab<crate::MyPrefabData>>,
 }
 
-impl Sprited for Enemies {
-    fn new_sprite(&self) -> SpriteRender {
-        SpriteRender::new(self.sheet.clone(), 0)
+impl Animated for Enemies {
+    fn new_animated_sprite(&self) -> Handle<Prefab<crate::MyPrefabData>> {
+        self.anims.clone()
     }
 }

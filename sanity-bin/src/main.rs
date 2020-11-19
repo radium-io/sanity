@@ -1,15 +1,21 @@
-use std::{fmt::Debug, marker::PhantomData};
-
 use amethyst::{
+    animation::{
+        get_animation_set, AnimationBundle, AnimationCommand, AnimationControlSet, AnimationSet,
+        AnimationSetPrefab, EndControl,
+    },
     assets::{Handle, Processor},
+    assets::{HotReloadBundle, HotReloadStrategy},
+    assets::{PrefabData, PrefabLoader, PrefabLoaderSystemDesc, ProgressCounter, RonFormat},
     core::{frame_limiter::FrameRateLimitStrategy, transform::TransformBundle, Hidden},
-    ecs::{ReadStorage, SystemData, World},
+    derive::PrefabData,
+    ecs::{prelude::*, ReadStorage, SystemData, World},
     input::{InputBundle, StringBindings},
     prelude::*,
     renderer::{
         bundle::{RenderOrder, RenderPlan, Target},
         palette,
         plugins::{RenderFlat2D, RenderToWindow},
+        sprite::{prefab::SpriteScenePrefab, SpriteRender},
         types::DefaultBackend,
         Backend, Factory, RenderGroupDesc, RenderPlugin, RenderingBundle, SpriteSheet, Texture,
     },
@@ -19,9 +25,12 @@ use amethyst::{
         MortonEncoder2D, Tile, TileMap,
     },
     ui::{RenderUi, UiBundle},
+    utils::ortho_camera::CameraOrthoSystem,
     utils::{application_root_dir, fps_counter::FpsCounterBundle},
-    Result,
+    Error, Result,
 };
+use serde::{Deserialize, Serialize};
+use std::{fmt::Debug, marker::PhantomData};
 
 mod component;
 mod map;
@@ -29,10 +38,14 @@ mod resource;
 mod state;
 mod system;
 
-use amethyst::{
-    assets::{HotReloadBundle, HotReloadStrategy},
-    utils::ortho_camera::CameraOrthoSystem,
-};
+/// Loading data for one entity
+#[derive(Debug, Clone, Deserialize, PrefabData)]
+pub struct MyPrefabData {
+    /// Information for rendering a scene with sprites
+    sprite_scene: SpriteScenePrefab,
+    /// Аll animations that can be run on the entity
+    animation_set: AnimationSetPrefab<usize, SpriteRender>,
+}
 
 fn main() -> Result<()> {
     amethyst::start_logger(Default::default());
@@ -54,8 +67,17 @@ fn main() -> Result<()> {
     .into_components();
 
     let game_data = GameDataBuilder::default()
+        .with_system_desc(
+            PrefabLoaderSystemDesc::<MyPrefabData>::default(),
+            "scene_loader",
+            &[],
+        )
         .with(CameraOrthoSystem::default(), "ortho_camera_system", &[])
         .with_bundle(HotReloadBundle::new(HotReloadStrategy::every(2)))?
+        .with_bundle(AnimationBundle::<usize, SpriteRender>::new(
+            "sprite_animation_control",
+            "sprite_sampler_interpolation",
+        ))?
         .with_bundle(TransformBundle::new())?
         .with_bundle(
             InputBundle::<StringBindings>::new()

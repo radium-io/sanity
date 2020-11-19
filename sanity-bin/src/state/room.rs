@@ -53,8 +53,12 @@ fn init_camera(world: &mut World, player: Entity) {
 
 // FIXME: allow other tilesets
 fn init_map(width: u32, height: u32, world: &mut World, progress: &mut ProgressCounter) {
-    let spritesheet_handle =
-        crate::resource::load_sprite_sheet(&world, "Dungeon_Tileset.png", "Dungeon_Tileset.ron");
+    let spritesheet_handle = crate::resource::load_sprite_sheet(
+        &world,
+        "Dungeon_Tileset.png",
+        "Dungeon_Tileset.ron",
+        progress,
+    );
 
     let map = TileMap::<RoomTile>::new(
         Vector3::new(width, height, sanity_lib::map::MapLayer::COUNT as u32), // The dimensions of the map
@@ -82,11 +86,12 @@ fn init_map(width: u32, height: u32, world: &mut World, progress: &mut ProgressC
 }
 
 // FIXME: allow other character sprites
-fn init_player(world: &mut World, start: Point) -> Entity {
+fn init_player(world: &mut World, start: Point, prog: &mut ProgressCounter) -> Entity {
     let sprite_sheet = crate::resource::load_sprite_sheet(
         &world,
         "sprites/Space Cadet.png",
         "sprites/Space Cadet.ron",
+        prog,
     );
     let mut t = Transform::default();
     t.move_forward(1.);
@@ -137,7 +142,7 @@ impl RoomState {
 
 impl SimpleState for RoomState {
     fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
-        let StateData { world, .. } = data;
+        let StateData { mut world, .. } = data;
 
         // register components, may be able to remove if used by system
         world.register::<Named>();
@@ -149,18 +154,22 @@ impl SimpleState for RoomState {
                 &world,
                 "sprites/bullets.png",
                 "sprites/bullets.ron",
+                &mut self.progress_counter,
             ),
         });
 
-        world.insert(crate::resource::Enemies {
-            sheet: crate::resource::load_sprite_sheet(
-                &world,
-                "sprites/Slime Sprite Sheet.png",
-                "sprites/slime.ron",
-            ),
-        });
+        let anims = crate::resource::load_anim_prefab(
+            &mut world,
+            "sprites/slime.anim.ron",
+            &mut self.progress_counter,
+        );
+        world.insert(crate::resource::Enemies { anims });
 
-        let player = init_player(world, Point::new(self.width / 2, self.height / 2));
+        let player = init_player(
+            world,
+            Point::new(self.width / 2, self.height / 2),
+            &mut self.progress_counter,
+        );
         init_camera(world, player);
         init_map(self.width, self.height, world, &mut self.progress_counter);
 
