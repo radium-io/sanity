@@ -87,20 +87,15 @@ fn init_map(width: u32, height: u32, world: &mut World, progress: &mut ProgressC
 
 // FIXME: allow other character sprites
 fn init_player(world: &mut World, start: Point, prog: &mut ProgressCounter) -> Entity {
-    let sprite_sheet = crate::resource::load_sprite_sheet(
-        &world,
-        "sprites/Space Cadet.png",
-        "sprites/Space Cadet.ron",
-        prog,
-    );
     let mut t = Transform::default();
     t.move_forward(1.);
     t.move_up(8.);
+    let prefab = crate::resource::load_anim_prefab(world, "sprites/Space Cadet.anim.ron", prog);
     world
         .create_entity()
         .with(crate::component::Player)
         .with(crate::component::Position { pos: start })
-        .with(SpriteRender::new(sprite_sheet.clone(), 0))
+        .with(prefab)
         .with(Transparent)
         .with(t)
         .build()
