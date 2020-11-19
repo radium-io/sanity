@@ -139,8 +139,7 @@ pub fn gen_map(
         }
     });
 
-    let mut clone = map.clone();
-    let mut my_map = SanityMap(clone);
+    let my_map = SanityMap(map);
     let dijkstra = DijkstraMap::new(
         width,
         height,
@@ -152,11 +151,13 @@ pub fn gen_map(
     for x in 0..width {
         for y in 0..height {
             let p = Point::new(x, y);
-            if let Some(tile) =
-                map.get_mut(&Point3::new(x, y, sanity_lib::map::MapLayer::Walls as u32))
-            {
-                if tile.walkable {
-                    if dijkstra.map[my_map.point2d_to_index(p)] == std::f32::MAX {
+            if dijkstra.map[my_map.point2d_to_index(p)] == std::f32::MAX {
+                if let Some(tile) =
+                    my_map
+                        .0
+                        .get_mut(&Point3::new(x, y, sanity_lib::map::MapLayer::Walls as u32))
+                {
+                    if tile.walkable {
                         println!("Removing unreachable {:?}", p);
                         tile.sprite = Some(pairs.null);
                         tile.walkable = false;
@@ -164,11 +165,14 @@ pub fn gen_map(
                         // TODO: remove surrounding tiles as well
                     }
                 }
-                if let Some(floor) =
-                    map.get_mut(&Point3::new(x, y, sanity_lib::map::MapLayer::Floor as u32))
-                {
-                    floor.sprite = Some(88);
-                }
+            }
+
+            if let Some(floor) =
+                my_map
+                    .0
+                    .get_mut(&Point3::new(x, y, sanity_lib::map::MapLayer::Floor as u32))
+            {
+                floor.sprite = Some(88);
             }
         }
     }

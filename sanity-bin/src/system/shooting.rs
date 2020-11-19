@@ -40,6 +40,7 @@ impl<'a> System<'a> for ShootingSystem {
         ReadExpect<'a, crate::resource::Bullets>,
         WriteStorage<'a, crate::component::MovementIntent>,
         Read<'a, LazyUpdate>,
+        ReadStorage<'a, crate::component::Position>,
     );
 
     fn run(
@@ -55,11 +56,12 @@ impl<'a> System<'a> for ShootingSystem {
             bullet_res,
             intents,
             lazy,
+            positions,
         ): Self::SystemData,
     ) {
         for tilemap in (&tilemaps).join() {
             if time.absolute_time() - self.last_move > Duration::from_millis(300) {
-                for (player, transform) in (&players, &transforms).join() {
+                for (player, player_pos) in (&players, &positions).join() {
                     for shoot_dir in &[
                         ("shoot_up", ABOVE),
                         ("shoot_down", BELOW),
@@ -68,11 +70,7 @@ impl<'a> System<'a> for ShootingSystem {
                     ] {
                         if input.action_is_down(shoot_dir.0).unwrap_or(false) {
                             self.last_move = time.absolute_time();
-
-                            let player_pos = tilemap
-                                .to_tile(&transform.translation().xy().to_homogeneous(), None)
-                                .unwrap();
-                            let spawn_pos = Point::new(player_pos.x, player_pos.y) + shoot_dir.1;
+                            let spawn_pos = player_pos.pos + shoot_dir.1;
                             let target_pt = Point3::new(
                                 spawn_pos.x as u32,
                                 spawn_pos.y as u32,
@@ -81,13 +79,21 @@ impl<'a> System<'a> for ShootingSystem {
                             if let Some(tile) = tilemap.get(&target_pt) {
                                 if tile.walkable {
                                     let mut t = Transform::default();
-                                    let world_pos = tilemap.to_world(&player_pos, None);
+                                    let world_pos = tilemap.to_world(
+                                        &Point3::new(
+                                            player_pos.pos.x as u32,
+                                            player_pos.pos.y as u32,
+                                            sanity_lib::map::MapLayer::Walls as u32,
+                                        ),
+                                        None,
+                                    );
                                     t.set_translation(world_pos);
 
                                     lazy.create_entity(&entities)
                                         .with(Transparent)
                                         .with(t)
                                         .with(crate::component::Projectile::new(10))
+                                        .with(player_pos.clone())
                                         .with(crate::component::MovementIntent {
                                             dir: direction::CardinalDirection::from_unit_coord(
                                                 Coord::new(shoot_dir.1.x, shoot_dir.1.y),

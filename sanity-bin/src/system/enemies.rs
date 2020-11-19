@@ -1,7 +1,7 @@
 use std::cmp::Ordering;
 
 use amethyst::{
-    core::{math::Point3, Transform},
+    core::{math::Point3, Hidden, Transform},
     derive::SystemDesc,
     ecs::{
         prelude::{System, SystemData, WriteStorage},
@@ -15,7 +15,7 @@ use amethyst::{
 use bracket_pathfinding::prelude::{Point, *};
 use sanity_lib::{map::SanityMap, tile::RoomTile};
 
-use crate::resource::Sprited;
+use crate::{component::Position, resource::Sprited};
 
 #[derive(Default, SystemDesc)]
 pub struct EnemySystem {
@@ -25,33 +25,34 @@ pub struct EnemySystem {
 impl<'a> System<'a> for EnemySystem {
     type SystemData = (
         Entities<'a>,
-        ReadStorage<'a, TileMap<RoomTile>>,
+        WriteStorage<'a, TileMap<RoomTile>>,
         ReadStorage<'a, crate::component::Player>,
         WriteStorage<'a, Transform>,
         Read<'a, LazyUpdate>,
         ReadExpect<'a, crate::resource::Enemies>,
         ReadStorage<'a, crate::component::Enemy>,
+        ReadStorage<'a, crate::component::Position>,
     );
 
     fn run(
         &mut self,
-        (entities, tilemaps, players, transforms, lazy, enemies_res, enemies): Self::SystemData,
+        (entities, mut tilemaps, players, transforms, lazy, enemies_res, enemies, positions): Self::SystemData,
     ) {
         if self.total_enemies < 1 {
-            for tilemap in (&tilemaps).join() {
-                let clone = tilemap.clone();
-                let my_map = SanityMap(clone);
+            for tilemap in (&mut tilemaps).join() {
+                let my_map = SanityMap(tilemap);
 
                 for (transform, _) in (&transforms, &players).join() {
                     let dijkstra = {
-                        if let Ok(tile) =
-                            tilemap.to_tile(&transform.translation().xy().to_homogeneous(), None)
+                        if let Ok(tile) = my_map
+                            .0
+                            .to_tile(&transform.translation().xy().to_homogeneous(), None)
                         {
                             let idx = my_map.point2d_to_index(Point::new(tile.x, tile.y));
 
                             let map = DijkstraMap::new(
-                                tilemap.dimensions().x,
-                                tilemap.dimensions().y,
+                                my_map.0.dimensions().x,
+                                my_map.0.dimensions().y,
                                 &[idx],
                                 &my_map,
                                 1000.,
@@ -64,7 +65,6 @@ impl<'a> System<'a> for EnemySystem {
                     };
 
                     if let Some(dijkstra) = dijkstra {
-                        println!("{:?}", dijkstra.map);
                         if let Some(furthest) = dijkstra
                             .map
                             .iter()
@@ -73,14 +73,15 @@ impl<'a> System<'a> for EnemySystem {
                             .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal))
                         {
                             let p = my_map.index_to_point2d(furthest.0);
-                            if let Some(tile) = tilemap.get(&Point3::new(
+                            if let Some(tile) = my_map.0.get(&Point3::new(
                                 p.x as u32,
                                 p.y as u32,
                                 sanity_lib::map::MapLayer::Walls as u32,
                             )) {
                                 if tile.walkable {
                                     // should just store dijkstras for every entity that can move
-                                    let w = tilemap
+                                    let w = my_map
+                                        .0
                                         .to_world(&Point3::new(p.x as u32, p.y as u32, 0), None);
                                     let mut t = Transform::default();
                                     t.set_translation(w);
@@ -88,9 +89,11 @@ impl<'a> System<'a> for EnemySystem {
                                     t.move_up(8.);
 
                                     lazy.create_entity(&entities)
-                                        .with(Transparent)
-                                        .with(t)
                                         .with(crate::component::Enemy)
+                                        .with(Transparent)
+                                        .with(Hidden)
+                                        .with(Position { pos: p })
+                                        .with(t)
                                         .with(enemies_res.new_sprite())
                                         .build();
                                     self.total_enemies += 1;

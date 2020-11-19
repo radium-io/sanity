@@ -13,6 +13,7 @@ use amethyst::{
     window::ScreenDimensions,
     winit,
 };
+use bracket_pathfinding::prelude::Point;
 use direction::Coord;
 use sanity_lib::tile::RoomTile;
 use std::fmt::Debug;
@@ -81,7 +82,7 @@ fn init_map(width: u32, height: u32, world: &mut World, progress: &mut ProgressC
 }
 
 // FIXME: allow other character sprites
-fn init_player(world: &mut World) -> Entity {
+fn init_player(world: &mut World, start: Point) -> Entity {
     let sprite_sheet = crate::resource::load_sprite_sheet(
         &world,
         "sprites/Space Cadet.png",
@@ -93,6 +94,7 @@ fn init_player(world: &mut World) -> Entity {
     world
         .create_entity()
         .with(crate::component::Player)
+        .with(crate::component::Position { pos: start })
         .with(SpriteRender::new(sprite_sheet.clone(), 0))
         .with(Transparent)
         .with(t)
@@ -158,7 +160,7 @@ impl SimpleState for RoomState {
             ),
         });
 
-        let player = init_player(world);
+        let player = init_player(world, Point::new(self.width / 2, self.height / 2));
         init_camera(world, player);
         init_map(self.width, self.height, world, &mut self.progress_counter);
 
