@@ -64,7 +64,9 @@ impl<'a> System<'a> for EnemySystem {
             );
         }
 
-        if self.total_enemies < 1 {
+        let enemies = (&enemies).join().count();
+
+        if enemies < 1 {
             for tilemap in (&mut tilemaps).join() {
                 let my_map = SanityMap(tilemap);
 

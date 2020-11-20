@@ -3,7 +3,7 @@ use amethyst::{
     derive::SystemDesc,
     ecs::{
         prelude::{System, SystemData, WriteStorage},
-        Entities, Join, ReadStorage,
+        Entities, Entity, Join, ReadStorage,
     },
     tiles::{Map, MapStorage, TileMap},
 };
@@ -21,11 +21,12 @@ impl<'a> System<'a> for MovementSystem {
         ReadStorage<'a, crate::component::MovementIntent>,
         WriteStorage<'a, crate::component::Collision>,
         WriteStorage<'a, crate::component::Position>,
+        ReadStorage<'a, crate::component::Projectile>,
     );
 
     fn run(
         &mut self,
-        (entities, tilemaps, mut transforms, intents, mut collisions, mut positions): Self::SystemData,
+        (entities, tilemaps, mut transforms, intents, mut collisions, mut positions, projectiles): Self::SystemData,
     ) {
         for tilemap in (&tilemaps).join() {
             for (entity, position, intent, transform) in
@@ -50,8 +51,35 @@ impl<'a> System<'a> for MovementSystem {
                         );
                     } else {
                         // TODO: add a Collision component to the entity and resolve behavior in collision_system
-                        collisions.insert(entity, crate::component::Collision { location: target });
+                        collisions.insert(
+                            entity,
+                            crate::component::Collision {
+                                location: target,
+                                with: None,
+                            },
+                        );
                     }
+                }
+            }
+        }
+
+        let proj_pos = (&entities, &projectiles, &positions).join();
+
+        let ent_pos: Vec<(Entity, &crate::component::Position, _)> =
+            (&entities, &positions, !&projectiles).join().collect();
+
+        for (p_ent, _, p_pos) in proj_pos {
+            for (c_ent, c_pos, _) in ent_pos.iter() {
+                if p_pos.pos == c_pos.pos {
+                    println!("Collission");
+                    // inserts a collision on the entity occupying space projectile is in
+                    collisions.insert(
+                        *c_ent,
+                        crate::component::Collision {
+                            location: p_pos.pos.clone(),
+                            with: Some(p_ent),
+                        },
+                    );
                 }
             }
         }
