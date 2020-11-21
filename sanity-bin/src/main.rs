@@ -110,8 +110,8 @@ fn main() -> Result<()> {
         )
         .with(
             system::spawn::SpawnSystem::default(),
-            "enemy_system",
-            &["movement_system"],
+            "spawn_system",
+            &["collision_system"],
         )
         .with(Processor::<sanity_lib::assets::Pairs>::new(), "", &[])
         .with_bundle(

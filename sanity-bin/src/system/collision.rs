@@ -15,15 +15,16 @@ impl<'a> System<'a> for CollisionSystem {
         WriteStorage<'a, crate::component::Collision>,
         ReadStorage<'a, crate::component::Projectile>,
         ReadStorage<'a, crate::component::Player>,
+        ReadStorage<'a, crate::component::Enemy>,
     );
 
-    fn run(&mut self, (entities, mut collisions, projectiles, players): Self::SystemData) {
+    fn run(&mut self, (entities, mut collisions, projectiles, players, enemies): Self::SystemData) {
         for (entity, _) in (&entities, &players).join() {
             // TODO: play wall collision ugh noise
             collisions.remove(entity);
         }
 
-        for (entity, _, _) in (&entities, &collisions, !&projectiles).join() {
+        for (entity, _, _) in (&entities, &collisions, &enemies).join() {
             // probably hit an enemy
             entities.delete(entity);
         }
