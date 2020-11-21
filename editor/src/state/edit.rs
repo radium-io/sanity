@@ -85,9 +85,9 @@ impl SimpleState for EditState {
                 if let Some(tile) = map.get_mut(&Point3::new(x, y, 0)) {
                     tile.sprite = Some(x as usize + (y * 16) as usize);
                 }
-                x = x + 1;
+                x += 1;
             }
-            y = y + 1;
+            y += 1;
             x = 0;
         }
 
@@ -117,11 +117,7 @@ impl SimpleState for EditState {
     }
 
     fn update(&mut self, _data: &mut StateData<'_, GameData<'_, '_>>) -> SimpleTrans {
-        if self.progress_counter.is_complete() {
-            Trans::None
-        } else {
-            Trans::None
-        }
+        Trans::None
     }
 
     fn handle_event(
@@ -132,8 +128,6 @@ impl SimpleState for EditState {
         if let StateEvent::Window(event) = &event {
             if is_close_requested(&event) || is_key_down(&event, winit::VirtualKeyCode::Escape) {
                 Trans::Quit
-            } else if is_key_down(&event, winit::VirtualKeyCode::F) {
-                Trans::None
             } else {
                 Trans::None
             }

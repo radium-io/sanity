@@ -80,58 +80,55 @@ impl<'s> System<'s> for TileSelectSystem {
 
                     // Find any sprites which the mouse is currently inside
                     for (entity, tilemap) in (&entities, &mut tilemaps).join() {
-                        match tilemap.to_tile(
+                        if let Ok(tile_pos) = tilemap.to_tile(
                             &Vector3::new(mouse_world_position.x, mouse_world_position.y, 0.),
                             None,
                         ) {
-                            Ok(tile_pos) => {
-                                if input.mouse_button_is_down(winit::MouseButton::Left) {
-                                    if !self.left_down {
-                                        selected.insert(
+                            if input.mouse_button_is_down(winit::MouseButton::Left) {
+                                if !self.left_down {
+                                    selected
+                                        .insert(
                                             entity,
                                             crate::state::edit::Selected(Some(tile_pos)),
-                                        );
-                                    }
-                                    self.left_down = true;
-                                } else if let Some(Selected(Some(selected_pos))) =
-                                    selected.get(entity)
-                                {
-                                    self.left_down = false;
+                                        )
+                                        .expect("Could not selected tile.");
+                                }
+                                self.left_down = true;
+                            } else if let Some(Selected(Some(selected_pos))) = selected.get(entity)
+                            {
+                                self.left_down = false;
 
-                                    if input.action_is_down("east").unwrap_or(false) {
-                                        if !self.right_down {
-                                            let index = tile_pos.x as usize
-                                                + (tile_pos.y * tilemap.dimensions().x) as usize;
-                                            let prev = tilemap.get_mut(&selected_pos).unwrap();
+                                if input.action_is_down("east").unwrap_or(false) {
+                                    if !self.right_down {
+                                        let index = tile_pos.x as usize
+                                            + (tile_pos.y * tilemap.dimensions().x) as usize;
+                                        let prev = tilemap.get_mut(&selected_pos).unwrap();
 
-                                            if prev.candidates.e.contains(&index) {
-                                                prev.candidates.e.retain(|x| *x != index);
-                                            } else {
-                                                prev.candidates.e.push(index);
-                                            }
+                                        if prev.candidates.e.contains(&index) {
+                                            prev.candidates.e.retain(|x| *x != index);
+                                        } else {
+                                            prev.candidates.e.push(index);
                                         }
-                                        self.right_down = true;
-                                    } else if input.mouse_button_is_down(winit::MouseButton::Right)
-                                    {
-                                        if !self.right_down {
-                                            let index = tile_pos.x as usize
-                                                + (tile_pos.y * tilemap.dimensions().x) as usize;
-                                            let prev = tilemap.get_mut(&selected_pos).unwrap();
-
-                                            if prev.candidates.s.contains(&index) {
-                                                prev.candidates.s.retain(|x| *x != index);
-                                            } else {
-                                                prev.candidates.s.push(index);
-                                            }
-                                        }
-
-                                        self.right_down = true;
-                                    } else {
-                                        self.right_down = false;
                                     }
+                                    self.right_down = true;
+                                } else if input.mouse_button_is_down(winit::MouseButton::Right) {
+                                    if !self.right_down {
+                                        let index = tile_pos.x as usize
+                                            + (tile_pos.y * tilemap.dimensions().x) as usize;
+                                        let prev = tilemap.get_mut(&selected_pos).unwrap();
+
+                                        if prev.candidates.s.contains(&index) {
+                                            prev.candidates.s.retain(|x| *x != index);
+                                        } else {
+                                            prev.candidates.s.push(index);
+                                        }
+                                    }
+
+                                    self.right_down = true;
+                                } else {
+                                    self.right_down = false;
                                 }
                             }
-                            Err(_) => {}
                         }
 
                         // tint all tiles that are candidates (so selecting new tile will show candidates)

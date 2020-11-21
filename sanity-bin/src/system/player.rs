@@ -1,7 +1,6 @@
 use amethyst::{
     animation::{
-        get_animation_set, AnimationBundle, AnimationCommand, AnimationControlSet, AnimationSet,
-        AnimationSetPrefab, EndControl,
+        get_animation_set, AnimationCommand, AnimationControlSet, AnimationSet, EndControl,
     },
     core::timing::Time,
     derive::SystemDesc,
@@ -10,7 +9,7 @@ use amethyst::{
         Entities, Join, ReadStorage,
     },
     input::{InputHandler, StringBindings},
-    renderer::{SpriteRender, Transparent},
+    renderer::SpriteRender,
     shred::Read,
 };
 use core::time::Duration;

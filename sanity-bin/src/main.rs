@@ -1,11 +1,8 @@
 use amethyst::{
-    animation::{
-        get_animation_set, AnimationBundle, AnimationCommand, AnimationControlSet, AnimationSet,
-        AnimationSetPrefab, EndControl,
-    },
+    animation::{AnimationBundle, AnimationSetPrefab},
     assets::{Handle, Processor},
     assets::{HotReloadBundle, HotReloadStrategy},
-    assets::{PrefabData, PrefabLoader, PrefabLoaderSystemDesc, ProgressCounter, RonFormat},
+    assets::{PrefabData, PrefabLoaderSystemDesc, ProgressCounter},
     core::{frame_limiter::FrameRateLimitStrategy, transform::TransformBundle, Hidden},
     derive::PrefabData,
     ecs::{prelude::*, ReadStorage, SystemData, World},
@@ -29,7 +26,7 @@ use amethyst::{
     utils::{application_root_dir, fps_counter::FpsCounterBundle},
     Error, Result,
 };
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use std::{fmt::Debug, marker::PhantomData};
 
 mod component;

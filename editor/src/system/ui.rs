@@ -36,8 +36,12 @@ impl<'a> System<'a> for UISystem {
                         ui.text = format!(
                             "{:?} \n south:{:?} \n east:{:?}",
                             p.x + p.y * t.dimensions().x,
-                            t.get(&p).map(|t| t.candidates.s.clone()).unwrap_or(vec![]),
-                            t.get(&p).map(|t| t.candidates.e.clone()).unwrap_or(vec![]),
+                            t.get(&p)
+                                .map(|t| t.candidates.s.clone())
+                                .unwrap_or_default(),
+                            t.get(&p)
+                                .map(|t| t.candidates.e.clone())
+                                .unwrap_or_default(),
                         );
                     }
                 }

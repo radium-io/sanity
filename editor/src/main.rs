@@ -11,13 +11,9 @@ use amethyst::{
     tiles::RenderTiles2D,
     ui::{RenderUi, UiBundle},
     utils::application_root_dir,
-};
-
-use amethyst::{
     assets::{HotReloadBundle, HotReloadStrategy},
     utils::ortho_camera::CameraOrthoSystem,
 };
-use sanity_lib;
 mod state;
 mod system;
 

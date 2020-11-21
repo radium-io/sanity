@@ -31,7 +31,7 @@ impl<'s> System<'s> for SaveSystem {
         (mut tilemaps, pairs_handles, input, pairs_storage, save_paths): Self::SystemData,
     ) {
         for (tilemap, pairs, save_path) in (&mut tilemaps, &pairs_handles, &save_paths).join() {
-            let dim = tilemap.dimensions().clone();
+            let dim = *tilemap.dimensions();
 
             if self.pairs.is_none() && pairs_storage.get(pairs).is_some() {
                 self.pairs = Some(pairs_storage.get(pairs).unwrap().clone());

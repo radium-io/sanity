@@ -4,7 +4,6 @@ use amethyst::{
     tiles::{Map, MapStorage, TileMap},
 };
 use bracket_pathfinding::prelude::*;
-use strum_macros::EnumCount;
 
 pub struct SanityMap<'a>(pub &'a mut TileMap<RoomTile>);
 

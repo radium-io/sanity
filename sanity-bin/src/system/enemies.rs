@@ -1,8 +1,7 @@
 use crate::{component::Position, resource::Animated};
 use amethyst::{
     animation::{
-        get_animation_set, AnimationBundle, AnimationCommand, AnimationControlSet, AnimationSet,
-        AnimationSetPrefab, EndControl,
+        get_animation_set, AnimationCommand, AnimationControlSet, AnimationSet, EndControl,
     },
     core::{math::Point3, Hidden, Transform},
     derive::SystemDesc,
@@ -33,7 +32,6 @@ impl<'a> System<'a> for EnemySystem {
         Read<'a, LazyUpdate>,
         ReadExpect<'a, crate::resource::Enemies>,
         ReadStorage<'a, crate::component::Enemy>,
-        ReadStorage<'a, crate::component::Position>,
         ReadStorage<'a, AnimationSet<usize, SpriteRender>>,
         WriteStorage<'a, AnimationControlSet<usize, SpriteRender>>,
     );
@@ -48,7 +46,6 @@ impl<'a> System<'a> for EnemySystem {
             lazy,
             enemies_res,
             enemies,
-            positions,
             animation_sets,
             mut control_sets,
         ): Self::SystemData,
@@ -96,7 +93,7 @@ impl<'a> System<'a> for EnemySystem {
                         if let Some(furthest) = dijkstra
                             .map
                             .iter()
-                            .map(|x| if x == &std::f32::MAX { &0. } else { x })
+                            .map(|x| if x > &1000. { &0. } else { x })
                             .enumerate()
                             .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal))
                         {
@@ -114,8 +111,7 @@ impl<'a> System<'a> for EnemySystem {
                                     t.move_forward(2.);
                                     t.move_up(8.);
 
-                                    let entity = lazy
-                                        .create_entity(&entities)
+                                    lazy.create_entity(&entities)
                                         .with(crate::component::Enemy)
                                         .with(Transparent)
                                         .with(Hidden)

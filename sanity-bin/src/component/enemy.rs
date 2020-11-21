@@ -1,5 +1,4 @@
-use amethyst::ecs::{Component, DenseVecStorage, NullStorage};
-use bracket_pathfinding::prelude::Point;
+use amethyst::ecs::{Component, NullStorage};
 
 #[derive(Default)]
 pub struct Enemy;

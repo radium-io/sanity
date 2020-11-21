@@ -1,5 +1,5 @@
 use amethyst::{
-    core::{math::Point3, Hidden, Named},
+    core::{math::Point3, Hidden},
     derive::SystemDesc,
     ecs::{
         prelude::{System, SystemData, WriteStorage},
@@ -18,7 +18,6 @@ impl<'a> System<'a> for VisibilitySystem {
         Entities<'a>,
         WriteStorage<'a, TileMap<RoomTile>>,
         WriteStorage<'a, TileMap<FloorTile>>,
-        ReadStorage<'a, Named>,
         ReadStorage<'a, crate::component::Player>,
         WriteStorage<'a, Hidden>,
         ReadStorage<'a, crate::component::Enemy>,
@@ -27,7 +26,7 @@ impl<'a> System<'a> for VisibilitySystem {
 
     fn run(
         &mut self,
-        (entities, mut wall_maps, mut floor_maps, names, players, mut hiddens, enemies, positions): Self::SystemData,
+        (entities, mut wall_maps, mut floor_maps, players, mut hiddens, enemies, positions): Self::SystemData,
     ) {
         for floor in (&mut floor_maps).join() {
             for walls in (&mut wall_maps).join() {

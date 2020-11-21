@@ -1,14 +1,10 @@
 use amethyst::{
-    core::{math::Point3, Transform},
     derive::SystemDesc,
     ecs::{
         prelude::{System, SystemData, WriteStorage},
         Entities, Join, ReadStorage,
     },
-    tiles::{Map, MapStorage, TileMap},
 };
-use bracket_pathfinding::prelude::Point;
-use sanity_lib::tile::RoomTile;
 
 #[derive(Default, SystemDesc)]
 pub struct CollisionSystem {}

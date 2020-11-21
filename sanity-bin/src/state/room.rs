@@ -1,14 +1,14 @@
 use amethyst::{
     assets::{AssetStorage, Handle, Loader, ProgressCounter, RonFormat},
     core::{
-        math::{Point2, Point3, Vector3},
-        Hidden, Named, Parent, Transform,
+        math::{Point2, Vector3},
+        Named, Parent, Transform,
     },
     ecs::prelude::*,
     input::{is_close_requested, is_key_down},
     prelude::*,
-    renderer::{camera::Camera, SpriteRender, Transparent},
-    tiles::{Map, TileMap},
+    renderer::{camera::Camera, Transparent},
+    tiles::TileMap,
     ui::UiCreator,
     window::ScreenDimensions,
     winit,
@@ -17,8 +17,6 @@ use bracket_pathfinding::prelude::Point;
 use direction::Coord;
 use sanity_lib::tile::FloorTile;
 use sanity_lib::tile::RoomTile;
-use std::fmt::Debug;
-use strum::EnumCount;
 
 #[derive(Default)]
 pub struct RoomState {
@@ -108,7 +106,7 @@ impl RoomState {
         let walls = TileMap::<RoomTile>::new(
             Vector3::new(self.width, self.height, 1), // The dimensions of the map
             Vector3::new(32, 32, 1),                  // The dimensions of each tile
-            Some(spritesheet_handle.clone()),
+            Some(spritesheet_handle),
         );
 
         let mut t = Transform::default();
@@ -125,13 +123,12 @@ impl RoomState {
 
     fn gen_map_exec(&self, world: &mut World) {
         world.exec(
-            |(mut wall_maps, mut floor_maps, assets, players, positions, names): (
+            |(mut wall_maps, mut floor_maps, assets, players, positions): (
                 WriteStorage<'_, TileMap<RoomTile>>,
                 WriteStorage<'_, TileMap<FloorTile>>,
                 Read<'_, AssetStorage<sanity_lib::assets::Pairs>>,
                 ReadStorage<'_, crate::component::Player>,
                 ReadStorage<'_, crate::component::Position>,
-                ReadStorage<'_, Named>,
             )| {
                 for floor in (&mut floor_maps).join() {
                     for walls in (&mut wall_maps).join() {

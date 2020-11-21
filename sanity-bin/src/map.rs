@@ -1,13 +1,11 @@
 use amethyst::tiles::Map;
 use amethyst::{
     core::math::Point3,
-    ecs::Entities,
-    shred::World,
     tiles::{MapStorage, TileMap},
 };
 use bracket_pathfinding::prelude::*;
 use direction::Coord;
-use rand::{random, thread_rng, Rng};
+use rand::{thread_rng, Rng};
 use sanity_lib::{map::SanityMap, tile::FloorTile, tile::RoomTile};
 use wfc::*;
 use wfc::{PatternDescription, PatternTable};
@@ -38,21 +36,20 @@ impl ForbidPattern for ForbidCorner {
     }
 }
 
-fn to_vec(p: &Vec<(usize, usize)>, idx: usize, max: usize) -> (Vec<u32>, Vec<u32>) {
+fn to_vec(p: &[(usize, usize)], idx: usize, max: usize) -> (Vec<u32>, Vec<u32>) {
     (
-        p.clone()
-            .into_iter()
+        p.iter()
             .filter(|p| p.1 == idx && p.0 < max)
             .map(|p| p.0 as u32)
             .collect(),
-        p.clone()
-            .into_iter()
+        p.iter()
             .filter(|p| p.0 == idx && p.1 < max)
             .map(|p| p.1 as u32)
             .collect(),
     )
 }
 
+#[allow(clippy::many_single_char_names)]
 pub fn gen_map(
     walls: &mut TileMap<RoomTile>,
     floor: &mut TileMap<FloorTile>,
@@ -71,19 +68,19 @@ pub fn gen_map(
 
         let mut wt = std::num::NonZeroU32::new(50);
 
-        if (n.len() > 0 || s.len() > 0) && (w.len() == 0 || e.len() == 0) {
+        if (!n.is_empty() || !s.is_empty()) && (w.is_empty() || e.is_empty()) {
             w.push(idx as u32);
             e.push(idx as u32);
             wt = std::num::NonZeroU32::new(1);
         }
 
-        if (n.len() == 0 || s.len() == 0) && (w.len() > 0 || e.len() > 0) {
+        if (n.is_empty() || s.is_empty()) && (!w.is_empty() || !e.is_empty()) {
             n.push(idx as u32);
             s.push(idx as u32);
             wt = std::num::NonZeroU32::new(1);
         }
 
-        if s.len() > 0 || e.len() > 0 || n.len() > 0 || w.len() > 0 {
+        if !s.is_empty() || !e.is_empty() || !n.is_empty() || !w.is_empty() {
             v.push(PatternDescription::new(
                 wt,
                 direction::CardinalDirectionTable::new_array([n, e, s, w]),
@@ -105,14 +102,14 @@ pub fn gen_map(
 
     let mut context = wfc::Context::new();
     let mut wave = wfc::Wave::new(wfc::Size::try_new(width, height).unwrap());
-    let mut stats = wfc::GlobalStats::new(patterns);
+    let stats = wfc::GlobalStats::new(patterns);
 
     let mut rng = thread_rng();
 
     let mut wfc_run = wfc::RunBorrow::new_wrap_forbid(
         &mut context,
         &mut wave,
-        &mut stats,
+        &stats,
         wfc::wrap::WrapNone,
         ForbidCorner {
             width: width as i32,

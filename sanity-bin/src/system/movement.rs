@@ -87,7 +87,7 @@ impl<'a> System<'a> for MovementSystem {
                     collisions.insert(
                         *c_ent,
                         crate::component::Collision {
-                            location: p_pos.pos.clone(),
+                            location: p_pos.pos,
                             with: Some(p_ent),
                         },
                     );

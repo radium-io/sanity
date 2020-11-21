@@ -1,8 +1,4 @@
-use amethyst::{
-    core::math::Point3,
-    ecs::{Component, NullStorage},
-};
-use bracket_pathfinding::prelude::*;
+use amethyst::ecs::{Component, NullStorage};
 
 #[derive(Debug, Default)]
 pub struct Player;

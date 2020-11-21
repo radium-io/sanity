@@ -136,7 +136,7 @@ impl SimpleState for LoadState {
                     }
                 }
 
-                if self.png_path.len() > 0 && self.ron_path.len() > 0 {
+                if !self.png_path.is_empty() && !self.ron_path.is_empty() {
                     Trans::Push(Box::new(EditState {
                         png: self.png_path.clone(),
                         ron: self.ron_path.clone(),
