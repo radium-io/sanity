@@ -15,15 +15,17 @@ use amethyst::{
     tiles::{Map, MapStorage, TileMap},
 };
 use bracket_pathfinding::prelude::{Point, *};
+use rand::seq::SliceRandom;
+use rand::thread_rng;
 use sanity_lib::{map::SanityMap, tile::RoomTile};
 use std::cmp::Ordering;
 
 #[derive(Default, SystemDesc)]
-pub struct EnemySystem {
+pub struct SpawnSystem {
     total_enemies: usize,
 }
 
-impl<'a> System<'a> for EnemySystem {
+impl<'a> System<'a> for SpawnSystem {
     type SystemData = (
         Entities<'a>,
         WriteStorage<'a, TileMap<RoomTile>>,
@@ -34,13 +36,14 @@ impl<'a> System<'a> for EnemySystem {
         ReadStorage<'a, crate::component::Enemy>,
         ReadStorage<'a, AnimationSet<usize, SpriteRender>>,
         WriteStorage<'a, AnimationControlSet<usize, SpriteRender>>,
+        ReadStorage<'a, crate::component::Position>,
     );
 
     fn run(
         &mut self,
         (
             entities,
-            mut tilemaps,
+            mut walls,
             players,
             transforms,
             lazy,
@@ -48,6 +51,7 @@ impl<'a> System<'a> for EnemySystem {
             enemies,
             animation_sets,
             mut control_sets,
+            positions,
         ): Self::SystemData,
     ) {
         for (entity, animation_set, _) in (&entities, &animation_sets, &enemies).join() {
@@ -61,46 +65,41 @@ impl<'a> System<'a> for EnemySystem {
             );
         }
 
-        let enemies = (&enemies).join().count();
+        let mut enemies = (&enemies).join().count();
 
         if enemies < 1 {
-            for tilemap in (&mut tilemaps).join() {
+            for tilemap in (&mut walls).join() {
                 let my_map = SanityMap(tilemap);
 
-                for (transform, _) in (&transforms, &players).join() {
-                    let dijkstra = {
-                        if let Ok(tile) = my_map
-                            .0
-                            .to_tile(&transform.translation().xy().to_homogeneous(), None)
-                        {
-                            let idx = my_map.point2d_to_index(Point::new(tile.x, tile.y));
+                for (position, _) in (&positions, &players).join() {
+                    let idx = my_map.point2d_to_index(position.pos);
 
-                            let map = DijkstraMap::new(
-                                my_map.0.dimensions().x,
-                                my_map.0.dimensions().y,
-                                &[idx],
-                                &my_map,
-                                1000.,
-                            );
+                    let dijkstra = DijkstraMap::new(
+                        my_map.0.dimensions().x,
+                        my_map.0.dimensions().y,
+                        &[idx],
+                        &my_map,
+                        1000.,
+                    );
 
-                            Some(map)
-                        } else {
-                            None
-                        }
-                    };
+                    let mut near_to_far = dijkstra
+                        .map
+                        .iter()
+                        .map(|x| if x > &1000. { &0. } else { x })
+                        .enumerate()
+                        .collect::<Vec<(usize, &f32)>>();
 
-                    if let Some(dijkstra) = dijkstra {
-                        if let Some(furthest) = dijkstra
-                            .map
-                            .iter()
-                            .map(|x| if x > &1000. { &0. } else { x })
-                            .enumerate()
-                            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal))
-                        {
-                            let p = my_map.index_to_point2d(furthest.0);
-                            if let Some(tile) =
-                                my_map.0.get(&Point3::new(p.x as u32, p.y as u32, 0))
-                            {
+                    near_to_far
+                        .sort_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal));
+
+                    let mut rng = thread_rng();
+                    if let Some(spawnable) = near_to_far.rsplit(|x| *x.1 < 2.).next() {
+                        let positions = spawnable.choose_multiple(&mut rng, 4);
+
+                        for pos in positions {
+                            println!("{:?}", pos);
+                            let p = my_map.index_to_point2d(pos.0);
+                            if let Some(tile) = my_map.get(p) {
                                 if tile.walkable {
                                     // should just store dijkstras for every entity that can move
                                     let w = my_map
@@ -120,7 +119,7 @@ impl<'a> System<'a> for EnemySystem {
                                         .with(enemies_res.new_animated_sprite())
                                         .build();
 
-                                    self.total_enemies += 1;
+                                    enemies += 1;
                                     println!("Spawn at {:?}", p);
                                 }
                             }

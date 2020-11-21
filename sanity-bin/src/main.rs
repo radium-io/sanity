@@ -109,7 +109,7 @@ fn main() -> Result<()> {
             &["movement_system"],
         )
         .with(
-            system::enemies::EnemySystem::default(),
+            system::spawn::SpawnSystem::default(),
             "enemy_system",
             &["movement_system"],
         )

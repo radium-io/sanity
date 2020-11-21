@@ -8,6 +8,12 @@ use bracket_pathfinding::prelude::*;
 pub struct SanityMap<'a>(pub &'a mut TileMap<RoomTile>);
 
 impl<'a> SanityMap<'a> {
+    pub fn get(&self, pt: Point) -> Option<&RoomTile> {
+        self.0.get(&Point3::new(pt.x as u32, pt.y as u32, 0))
+    }
+}
+
+impl<'a> SanityMap<'a> {
     fn valid_exit(&self, loc: Point, delta: Point) -> Option<usize> {
         let destination = loc + delta;
         if self.in_bounds(destination) {
