@@ -1,3 +1,4 @@
+use amethyst::tiles::Map;
 use amethyst::{
     core::math::Point3,
     ecs::Entities,
@@ -7,10 +8,9 @@ use amethyst::{
 use bracket_pathfinding::prelude::*;
 use direction::Coord;
 use rand::{random, thread_rng, Rng};
-use sanity_lib::{map::SanityMap, tile::RoomTile};
-use wfc::{PatternDescription, PatternTable};
-
+use sanity_lib::{map::SanityMap, tile::FloorTile, tile::RoomTile};
 use wfc::*;
+use wfc::{PatternDescription, PatternTable};
 
 struct ForbidCorner {
     width: i32,
@@ -54,13 +54,15 @@ fn to_vec(p: &Vec<(usize, usize)>, idx: usize, max: usize) -> (Vec<u32>, Vec<u32
 }
 
 pub fn gen_map(
-    map: &mut TileMap<RoomTile>,
+    walls: &mut TileMap<RoomTile>,
+    floor: &mut TileMap<FloorTile>,
     pairs: &sanity_lib::assets::Pairs,
-    width: u32,
-    height: u32,
     start: Coord,
 ) {
     let mut v: Vec<PatternDescription> = Vec::new();
+    let (width, height) = (walls.dimensions().x, walls.dimensions().y);
+
+    println!("{:?}, {:?}", width, height);
 
     let max_tiles = 115;
     for idx in 0..max_tiles {
@@ -125,11 +127,7 @@ pub fn gen_map(
     wfc_run.collapse_retrying(wfc::retry::Forever, &mut rng);
 
     wave.grid().map_ref_with_coord(|c, cell| {
-        if let Some(mut tile) = map.get_mut(&Point3::new(
-            c.x as u32,
-            c.y as u32,
-            sanity_lib::map::MapLayer::Walls as u32,
-        )) {
+        if let Some(mut tile) = walls.get_mut(&Point3::new(c.x as u32, c.y as u32, 0)) {
             let s = Some(
                 cell.chosen_pattern_id()
                     .expect(&format!("Chosen tile for coord {:?}.", cell)) as usize,
@@ -139,7 +137,7 @@ pub fn gen_map(
         }
     });
 
-    let my_map = SanityMap(map);
+    let my_map = SanityMap(walls);
     let dijkstra = DijkstraMap::new(
         width,
         height,
@@ -152,11 +150,7 @@ pub fn gen_map(
         for y in 0..height {
             let p = Point::new(x, y);
             if dijkstra.map[my_map.point2d_to_index(p)] == std::f32::MAX {
-                if let Some(tile) =
-                    my_map
-                        .0
-                        .get_mut(&Point3::new(x, y, sanity_lib::map::MapLayer::Walls as u32))
-                {
+                if let Some(tile) = my_map.0.get_mut(&Point3::new(x, y, 0)) {
                     if tile.walkable {
                         println!("Removing unreachable {:?}", p);
                         tile.sprite = Some(pairs.null);
@@ -167,12 +161,8 @@ pub fn gen_map(
                 }
             }
 
-            if let Some(floor) =
-                my_map
-                    .0
-                    .get_mut(&Point3::new(x, y, sanity_lib::map::MapLayer::Floor as u32))
-            {
-                floor.sprite = Some(88);
+            if let Some(floor_tile) = floor.get_mut(&Point3::new(x, y, 0)) {
+                floor_tile.sprite = Some(88);
             }
         }
     }

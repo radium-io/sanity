@@ -1,8 +1,8 @@
 use amethyst::{
     assets::{AssetStorage, Handle, Loader, ProgressCounter, RonFormat},
     core::{
-        math::{Point2, Vector3},
-        Named, Parent, Transform,
+        math::{Point2, Point3, Vector3},
+        Hidden, Named, Parent, Transform,
     },
     ecs::prelude::*,
     input::{is_close_requested, is_key_down},
@@ -15,16 +15,18 @@ use amethyst::{
 };
 use bracket_pathfinding::prelude::Point;
 use direction::Coord;
+use sanity_lib::tile::FloorTile;
 use sanity_lib::tile::RoomTile;
 use std::fmt::Debug;
 use strum::EnumCount;
 
-#[derive(Debug, Default)]
+#[derive(Default)]
 pub struct RoomState {
     progress_counter: ProgressCounter,
     map_generation: usize,
     width: u32,
     height: u32,
+    pairs: Option<Handle<sanity_lib::assets::Pairs>>,
 }
 
 impl RoomState {
@@ -46,85 +48,103 @@ fn init_camera(world: &mut World, player: Entity) {
     world
         .create_entity()
         .with(Camera::standard_2d(width / 2., height / 2.))
-        .with(Transform::from(Vector3::new(0., 0., 10.)))
+        .with(Transform::from(Vector3::new(0., 0., 100.)))
         .with(Parent { entity: player })
-        .build();
-}
-
-// FIXME: allow other tilesets
-fn init_map(width: u32, height: u32, world: &mut World, progress: &mut ProgressCounter) {
-    let spritesheet_handle = crate::resource::load_sprite_sheet(
-        &world,
-        "Dungeon_Tileset.png",
-        "Dungeon_Tileset.ron",
-        progress,
-    );
-
-    let map = TileMap::<RoomTile>::new(
-        Vector3::new(width, height, sanity_lib::map::MapLayer::COUNT as u32), // The dimensions of the map
-        Vector3::new(32, 32, 1), // The dimensions of each tile
-        Some(spritesheet_handle),
-    );
-
-    // load the tile pairs for this tileset
-    let pairs = {
-        let loader = world.read_resource::<Loader>();
-        loader.load(
-            "Dungeon_Tileset.pairs.ron",
-            RonFormat,
-            progress,
-            &world.read_resource::<AssetStorage<sanity_lib::assets::Pairs>>(),
-        )
-    };
-
-    world
-        .create_entity()
-        .with(map)
-        .with(pairs)
-        .with(Transform::default())
         .build();
 }
 
 // FIXME: allow other character sprites
 fn init_player(world: &mut World, start: Point, prog: &mut ProgressCounter) -> Entity {
     let mut t = Transform::default();
-    t.move_forward(1.);
     t.move_up(8.);
+    t.move_forward(60.);
     let prefab = crate::resource::load_anim_prefab(world, "sprites/Space Cadet.anim.ron", prog);
     world
         .create_entity()
+        .with(Transparent)
         .with(crate::component::Player)
         .with(crate::component::Position { pos: start })
         .with(prefab)
-        .with(Transparent)
         .with(t)
         .build()
 }
 
 impl RoomState {
+    // FIXME: allow other tilesets
+    fn init_map(&mut self, world: &mut World) {
+        let spritesheet_handle = crate::resource::load_sprite_sheet(
+            &world,
+            "Dungeon_Tileset.png",
+            "Dungeon_Tileset.ron",
+            &mut self.progress_counter,
+        );
+
+        // load the tile pairs for this tileset
+        let pairs = {
+            let loader = world.read_resource::<Loader>();
+            loader.load(
+                "Dungeon_Tileset.pairs.ron",
+                RonFormat,
+                &mut self.progress_counter,
+                &world.read_resource::<AssetStorage<sanity_lib::assets::Pairs>>(),
+            )
+        };
+
+        let floor = TileMap::<FloorTile>::new(
+            Vector3::new(self.width, self.height, 1), // The dimensions of the map
+            Vector3::new(32, 32, 1),                  // The dimensions of each tile
+            Some(spritesheet_handle.clone()),
+        );
+
+        let mut t = Transform::default();
+        t.move_forward(10.);
+        world
+            .create_entity()
+            .with(floor)
+            .with(t)
+            .named("floor")
+            .build();
+
+        let walls = TileMap::<RoomTile>::new(
+            Vector3::new(self.width, self.height, 1), // The dimensions of the map
+            Vector3::new(32, 32, 1),                  // The dimensions of each tile
+            Some(spritesheet_handle.clone()),
+        );
+
+        let mut t = Transform::default();
+        t.move_forward(50.);
+        world
+            .create_entity()
+            .with(walls)
+            .with(t)
+            .named("walls")
+            .build();
+
+        self.pairs = Some(pairs);
+    }
+
     fn gen_map_exec(&self, world: &mut World) {
         world.exec(
-            |(mut maps, pairs, assets, players, transforms): (
+            |(mut wall_maps, mut floor_maps, assets, players, positions, names): (
                 WriteStorage<'_, TileMap<RoomTile>>,
-                ReadStorage<'_, sanity_lib::assets::PairsHandle>,
+                WriteStorage<'_, TileMap<FloorTile>>,
                 Read<'_, AssetStorage<sanity_lib::assets::Pairs>>,
                 ReadStorage<'_, crate::component::Player>,
-                ReadStorage<'_, Transform>,
+                ReadStorage<'_, crate::component::Position>,
+                ReadStorage<'_, Named>,
             )| {
-                for (_, transform) in (&players, &transforms).join() {
-                    for (map, pair) in (&mut maps, &pairs).join() {
-                        if let Ok(pos) =
-                            map.to_tile(&transform.translation().xy().to_homogeneous(), None)
-                        {
+                for floor in (&mut floor_maps).join() {
+                    for walls in (&mut wall_maps).join() {
+                        for (_, pos) in (&players, &positions).join() {
                             if pos.xy() < Point2::new(self.width - 3, self.height - 3)
                                 && pos.xy() > Point2::new(2, 2)
                             {
+                                let pairs = &self.pairs.as_ref().unwrap().clone();
                                 crate::map::gen_map(
-                                    map,
-                                    assets.get(pair).unwrap(),
-                                    self.width,
-                                    self.height,
-                                    Coord::new(pos.x as i32, pos.y as i32), // FIXME: not using this any more so map gen can be borken
+                                    walls,
+                                    floor,
+                                    assets.get(&pairs).unwrap(),
+                                    Coord::new(pos.pos.x as i32, pos.pos.y as i32),
                                 );
                             }
                         }
@@ -166,7 +186,7 @@ impl SimpleState for RoomState {
             &mut self.progress_counter,
         );
         init_camera(world, player);
-        init_map(self.width, self.height, world, &mut self.progress_counter);
+        self.init_map(world);
 
         // FIXME: move to global state?
         world.exec(|mut creator: UiCreator<'_>| {

@@ -96,16 +96,14 @@ impl<'a> System<'a> for EnemySystem {
                         if let Some(furthest) = dijkstra
                             .map
                             .iter()
-                            .map(|x| if x == &f32::MAX { &0. } else { x })
+                            .map(|x| if x == &std::f32::MAX { &0. } else { x })
                             .enumerate()
                             .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal))
                         {
                             let p = my_map.index_to_point2d(furthest.0);
-                            if let Some(tile) = my_map.0.get(&Point3::new(
-                                p.x as u32,
-                                p.y as u32,
-                                sanity_lib::map::MapLayer::Walls as u32,
-                            )) {
+                            if let Some(tile) =
+                                my_map.0.get(&Point3::new(p.x as u32, p.y as u32, 0))
+                            {
                                 if tile.walkable {
                                     // should just store dijkstras for every entity that can move
                                     let w = my_map

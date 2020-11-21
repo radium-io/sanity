@@ -1,5 +1,5 @@
 use amethyst::{
-    core::{math::Point3, Hidden},
+    core::{math::Point3, Hidden, Named},
     derive::SystemDesc,
     ecs::{
         prelude::{System, SystemData, WriteStorage},
@@ -8,7 +8,7 @@ use amethyst::{
     tiles::{Map, MapStorage, TileMap},
 };
 use bracket_pathfinding::prelude::{field_of_view_set, Point};
-use sanity_lib::{map::SanityMap, tile::RoomTile};
+use sanity_lib::{map::SanityMap, tile::FloorTile, tile::RoomTile};
 
 #[derive(Default, SystemDesc)]
 pub struct VisibilitySystem {}
@@ -17,6 +17,8 @@ impl<'a> System<'a> for VisibilitySystem {
     type SystemData = (
         Entities<'a>,
         WriteStorage<'a, TileMap<RoomTile>>,
+        WriteStorage<'a, TileMap<FloorTile>>,
+        ReadStorage<'a, Named>,
         ReadStorage<'a, crate::component::Player>,
         WriteStorage<'a, Hidden>,
         ReadStorage<'a, crate::component::Enemy>,
@@ -25,33 +27,46 @@ impl<'a> System<'a> for VisibilitySystem {
 
     fn run(
         &mut self,
-        (entities, mut tilemaps, players, mut hiddens, enemies, positions): Self::SystemData,
+        (entities, mut wall_maps, mut floor_maps, names, players, mut hiddens, enemies, positions): Self::SystemData,
     ) {
-        for (_, position) in (&players, &positions).join() {
-            for tilemap in (&mut tilemaps).join() {
-                let dim = *tilemap.dimensions();
-                let my_map = SanityMap(tilemap);
-                let fov = field_of_view_set(position.pos, 4, &my_map);
+        for floor in (&mut floor_maps).join() {
+            for walls in (&mut wall_maps).join() {
+                for (_, position) in (&players, &positions).join() {
+                    let dim = *walls.dimensions();
+                    let mut c = walls.clone();
+                    let my_map = SanityMap(&mut c);
+                    let fov = field_of_view_set(position.pos, 4, &my_map);
 
-                for z in 0..2 {
                     for x in 0..dim.x {
                         for y in 0..dim.y {
                             let vis = fov.contains(&Point::new(x, y));
 
-                            if let Some(tile) = tilemap.get_mut(&Point3::new(x, y, z)) {
+                            if let Some(tile) = walls.get_mut(&Point3::new(x, y, 0)) {
                                 tile.visible = vis;
 
                                 if vis {
                                     tile.visited = true;
                                     if !tile.walkable {
                                         // FIXME: map looks weird unless we can see tile above top wall tile
-                                        if let Some(tile) =
-                                            tilemap.get_mut(&Point3::new(x, y - 1, z))
+                                        if let Some(tile) = walls.get_mut(&Point3::new(x, y - 1, 0))
+                                        {
+                                            tile.visible = vis;
+                                            tile.visited = true;
+                                        }
+
+                                        if let Some(tile) = floor.get_mut(&Point3::new(x, y - 1, 0))
                                         {
                                             tile.visible = vis;
                                             tile.visited = true;
                                         }
                                     }
+                                }
+                            }
+
+                            if let Some(tile) = floor.get_mut(&Point3::new(x, y, 0)) {
+                                tile.visible = vis;
+                                if vis {
+                                    tile.visited = true;
                                 }
                             }
 

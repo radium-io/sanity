@@ -22,7 +22,7 @@ use amethyst::{
     shred::DispatcherBuilder,
     tiles::{
         CoordinateEncoder, DrawTiles2DBounds, DrawTiles2DBoundsDefault, DrawTiles2DDesc,
-        MortonEncoder2D, Tile, TileMap,
+        MortonEncoder2D, RenderTiles2D, Tile, TileMap,
     },
     ui::{RenderUi, UiBundle},
     utils::ortho_camera::CameraOrthoSystem,
@@ -55,7 +55,7 @@ fn main() -> Result<()> {
     let your_red: f32 = 9.;
     let your_green: f32 = 9.;
     let your_blue: f32 = 9.;
-    let your_alpha: f32 = 1.0;
+    let your_alpha: f32 = 1.;
 
     let (r, g, b, a) = palette::Srgba::new(
         your_red / 255.,
@@ -125,7 +125,8 @@ fn main() -> Result<()> {
                 )
                 .with_plugin(RenderUi::default())
                 .with_plugin(RenderFlat2D::default())
-                .with_plugin(RenderTiles2D::<sanity_lib::tile::RoomTile>::default()),
+                .with_plugin(RenderTiles2D::<sanity_lib::tile::FloorTile>::default())
+                .with_plugin(RenderTiles2DTransparent::<sanity_lib::tile::RoomTile>::default()),
         )?;
 
     let mut game = Application::build(
@@ -142,7 +143,7 @@ fn main() -> Result<()> {
 
 /// A `RenderPlugin` for rendering a 2D Tiles entity.
 #[derive(Clone, Default)]
-pub struct RenderTiles2D<
+pub struct RenderTiles2DTransparent<
     T: Tile,
     E: CoordinateEncoder = MortonEncoder2D,
     Z: DrawTiles2DBounds = DrawTiles2DBoundsDefault,
@@ -151,13 +152,15 @@ pub struct RenderTiles2D<
     _marker: PhantomData<(T, E, Z)>,
 }
 
-impl<T: Tile, E: CoordinateEncoder, Z: DrawTiles2DBounds> Debug for RenderTiles2D<T, E, Z> {
+impl<T: Tile, E: CoordinateEncoder, Z: DrawTiles2DBounds> Debug
+    for RenderTiles2DTransparent<T, E, Z>
+{
     fn fmt(&self, _: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         todo!()
     }
 }
 
-impl<T: Tile, E: CoordinateEncoder, Z: DrawTiles2DBounds> RenderTiles2D<T, E, Z> {
+impl<T: Tile, E: CoordinateEncoder, Z: DrawTiles2DBounds> RenderTiles2DTransparent<T, E, Z> {
     /// Select render target on which Tiles should be rendered.
     #[must_use]
     pub fn with_target(mut self, target: Target) -> Self {
@@ -172,8 +175,9 @@ type SetupData<'a, T, E> = (
     ReadStorage<'a, Hidden>,
     ReadStorage<'a, TileMap<T, E>>,
 );
+
 impl<B: Backend, T: Tile, E: CoordinateEncoder, Z: DrawTiles2DBounds> RenderPlugin<B>
-    for RenderTiles2D<T, E, Z>
+    for RenderTiles2DTransparent<T, E, Z>
 {
     fn on_build<'a, 'b>(
         &mut self,
@@ -193,7 +197,7 @@ impl<B: Backend, T: Tile, E: CoordinateEncoder, Z: DrawTiles2DBounds> RenderPlug
     ) -> Result<()> {
         plan.extend_target(self.target, |ctx| {
             ctx.add(
-                RenderOrder::BeforeTransparent, // FIXME: I want some tiles behind player and some above
+                RenderOrder::Transparent, // FIXME: I want some tiles behind player and some above
                 DrawTiles2DDesc::<T, E, Z>::default().builder(),
             )?;
             Ok(())

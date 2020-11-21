@@ -52,11 +52,8 @@ impl<'a> System<'a> for ShootingSystem {
                             self.last_move = time.absolute_time();
 
                             let spawn_pos = player_pos.clone() + shoot_dir.1;
-                            let target_pt = Point3::new(
-                                spawn_pos.pos.x as u32,
-                                spawn_pos.pos.y as u32,
-                                sanity_lib::map::MapLayer::Walls as u32,
-                            );
+                            let target_pt =
+                                Point3::new(spawn_pos.pos.x as u32, spawn_pos.pos.y as u32, 0);
                             if let Some(tile) = tilemap.get(&target_pt) {
                                 if tile.walkable {
                                     let mut t = Transform::default();
@@ -64,7 +61,7 @@ impl<'a> System<'a> for ShootingSystem {
                                         &Point3::new(
                                             player_pos.pos.x as u32,
                                             player_pos.pos.y as u32,
-                                            sanity_lib::map::MapLayer::Walls as u32,
+                                            0,
                                         ),
                                         None,
                                     );

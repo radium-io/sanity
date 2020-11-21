@@ -32,7 +32,7 @@ impl Tile for RoomTile {
         if self.visited {
             self.sprite
         } else {
-            Some(17)
+            None
         }
     }
 
@@ -45,6 +45,31 @@ impl Tile for RoomTile {
             } else {
                 palette::Srgba::new(0.1, 0.1, 0.1, 1.)
             }
+        }
+    }
+}
+
+#[derive(Clone, Debug, Default)]
+pub struct FloorTile {
+    pub sprite: Option<TileSetIndex>,
+    pub visible: bool,
+    pub visited: bool,
+}
+
+impl Tile for FloorTile {
+    fn sprite(&self, _: Point3<u32>, _: &World) -> Option<usize> {
+        if self.visited {
+            self.sprite
+        } else {
+            None
+        }
+    }
+
+    fn tint(&self, _: Point3<u32>, _: &World) -> palette::Srgba {
+        if self.visible {
+            palette::Srgba::new(1., 1., 1., 1.)
+        } else {
+            palette::Srgba::new(0.1, 0.1, 0.1, 1.)
         }
     }
 }
