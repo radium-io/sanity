@@ -59,6 +59,8 @@ impl<'a> System<'a> for SpawnSystem {
         let mut num_enemies = (&enemies, &healths).join().count();
         let max_enemies = 10;
 
+        let enemy_positions: Vec<_> = (&enemies, &positions).join().collect();
+
         if num_enemies < max_enemies {
             for tilemap in (&mut walls).join() {
                 let my_map = SanityMap(tilemap);
@@ -86,13 +88,18 @@ impl<'a> System<'a> for SpawnSystem {
 
                     let mut rng = thread_rng();
                     if let Some(spawnable) = near_to_far.rsplit(|x| *x.1 < 8.).next() {
-                        // TODO: this should be based on visibility
-                        let positions =
-                            spawnable.choose_multiple(&mut rng, max_enemies - num_enemies);
+                        while spawnable.len() > max_enemies && num_enemies < max_enemies {
+                            // TODO: this should be based on visibility
+                            let pos = spawnable.choose(&mut rng).unwrap();
 
-                        for pos in positions {
-                            println!("{:?}", pos);
+                            println!("Checking {:?}", pos);
                             let p = my_map.index_to_point2d(pos.0);
+
+                            if enemy_positions.iter().any(|x| x.1.pos == p) {
+                                println!("Enemy already at position, trying a new position.");
+                                continue;
+                            }
+
                             if let Some(tile) = my_map.get(p) {
                                 if tile.walkable {
                                     // should just store dijkstras for every entity that can move

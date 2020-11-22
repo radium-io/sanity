@@ -54,6 +54,7 @@ pub struct FloorTile {
     pub sprite: Option<TileSetIndex>,
     pub visible: bool,
     pub visited: bool,
+    pub tint: Option<palette::Srgba>,
 }
 
 impl Tile for FloorTile {
@@ -66,10 +67,14 @@ impl Tile for FloorTile {
     }
 
     fn tint(&self, _: Point3<u32>, _: &World) -> palette::Srgba {
-        if self.visible {
-            palette::Srgba::new(1., 1., 1., 1.)
+        if let Some(tint) = self.tint {
+            tint
         } else {
-            palette::Srgba::new(0.1, 0.1, 0.1, 1.)
+            if self.visible {
+                palette::Srgba::new(1., 1., 1., 1.)
+            } else {
+                palette::Srgba::new(0.1, 0.1, 0.1, 1.)
+            }
         }
     }
 }

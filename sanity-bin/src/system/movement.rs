@@ -46,30 +46,6 @@ impl<'a> System<'a> for MovementSystem {
             let enemy_positions: Vec<_> =
                 (&entities, &positions, &enemies, &healths).join().collect();
 
-            // handle projectiles colliding with enemies
-            for (p_ent, p_pos, _) in (&entities, &positions, &projectiles).join() {
-                for (c_ent, c_pos, _, _) in enemy_positions.iter() {
-                    if p_pos.pos == c_pos.pos {
-                        println!("Colission");
-                        // inserts a collision on the entity occupying space projectile is in
-                        collisions.insert(
-                            *c_ent,
-                            crate::component::Collision {
-                                location: p_pos.pos,
-                                with: Some(p_ent),
-                            },
-                        );
-                        collisions.insert(
-                            p_ent,
-                            crate::component::Collision {
-                                location: p_pos.pos,
-                                with: Some(*c_ent),
-                            },
-                        );
-                    }
-                }
-            }
-
             // walked in to enemy
             let mut intents_to_cancel: Vec<Entity> = vec![];
             for (entity, position, intent, _) in
@@ -128,6 +104,34 @@ impl<'a> System<'a> for MovementSystem {
                             crate::component::Collision {
                                 location: target,
                                 with: None,
+                            },
+                        );
+                    }
+                }
+            }
+
+            let enemy_positions: Vec<_> =
+                (&entities, &positions, &enemies, &healths).join().collect();
+
+            // handle projectiles colliding with enemies
+            for (p_ent, p_pos, _) in (&entities, &positions, &projectiles).join() {
+                for (c_ent, c_pos, _, _) in enemy_positions.iter() {
+                    if p_pos.pos == c_pos.pos {
+                        println!("Colission");
+                        hiddens.insert(p_ent, Hidden);
+                        // inserts a collision on the entity occupying space projectile is in
+                        collisions.insert(
+                            *c_ent,
+                            crate::component::Collision {
+                                location: p_pos.pos,
+                                with: Some(p_ent),
+                            },
+                        );
+                        collisions.insert(
+                            p_ent,
+                            crate::component::Collision {
+                                location: p_pos.pos,
+                                with: Some(*c_ent),
                             },
                         );
                     }

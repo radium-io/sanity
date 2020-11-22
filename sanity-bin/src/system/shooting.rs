@@ -89,7 +89,7 @@ impl<'a> System<'a> for ShootingSystem {
                                         .with(Transparent)
                                         .with(Hidden)
                                         .with(t)
-                                        .with(crate::component::Projectile::new(10))
+                                        .with(crate::component::Projectile::new(5))
                                         .with(player_pos.clone())
                                         .with(crate::component::MovementIntent { dir: shoot_dir.1 })
                                         .with(bullet_res.new_sprite())
