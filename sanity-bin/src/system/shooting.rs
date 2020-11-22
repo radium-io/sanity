@@ -2,7 +2,7 @@ use amethyst::{
     animation::{
         get_animation_set, AnimationCommand, AnimationControlSet, AnimationSet, EndControl,
     },
-    core::{math::Point3, timing::Time, Transform},
+    core::{math::Point3, timing::Time, Hidden, Transform},
     derive::SystemDesc,
     ecs::{
         prelude::{System, SystemData},
@@ -87,6 +87,7 @@ impl<'a> System<'a> for ShootingSystem {
 
                                     lazy.create_entity(&entities)
                                         .with(Transparent)
+                                        .with(Hidden)
                                         .with(t)
                                         .with(crate::component::Projectile::new(10))
                                         .with(player_pos.clone())

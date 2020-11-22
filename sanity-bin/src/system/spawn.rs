@@ -108,7 +108,7 @@ impl<'a> System<'a> for SpawnSystem {
                                         .with(crate::component::Enemy)
                                         .with(Transparent)
                                         .with(Hidden)
-                                        .with(Position { pos: p })
+                                        .with(Position { pos: p, step: 0 })
                                         .with(crate::component::Health {
                                             max: 20,
                                             current: 20,

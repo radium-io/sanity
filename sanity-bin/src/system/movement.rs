@@ -1,5 +1,5 @@
 use amethyst::{
-    core::{math::Point3, Named, Transform},
+    core::{math::Point3, Hidden, Transform},
     derive::SystemDesc,
     ecs::{
         prelude::{System, SystemData, WriteStorage},
@@ -24,6 +24,7 @@ impl<'a> System<'a> for MovementSystem {
         ReadStorage<'a, crate::component::Projectile>,
         ReadStorage<'a, crate::component::Enemy>,
         ReadStorage<'a, crate::component::Health>,
+        WriteStorage<'a, Hidden>,
     );
 
     fn run(
@@ -38,6 +39,7 @@ impl<'a> System<'a> for MovementSystem {
             projectiles,
             enemies,
             healths,
+            mut hiddens,
         ): Self::SystemData,
     ) {
         for tilemap in (&tilemaps).join() {
@@ -97,11 +99,11 @@ impl<'a> System<'a> for MovementSystem {
                 }
             }
 
-            for ent in intents_to_cancel {
-                intents.remove(ent);
+            for ent in intents_to_cancel.iter() {
+                intents.remove(*ent);
             }
 
-            // move the enemy or player
+            // move the enemy or player or projectile
             for (entity, position, intent, transform) in
                 (&entities, &mut positions, &intents, &mut transforms).join()
             {
@@ -111,13 +113,14 @@ impl<'a> System<'a> for MovementSystem {
 
                 if let Some(tile) = tilemap.get(&Point3::new(target.x as u32, target.y as u32, 0)) {
                     if tile.walkable {
-                        position.pos = target;
                         transform
                             .prepend_translation_x(c.x as f32 * tilemap.tile_dimensions().x as f32);
                         transform.prepend_translation_y(
                             -c.y as f32 * tilemap.tile_dimensions().y as f32,
                             // note: world coords are inverted from grid coords on y
                         );
+
+                        position.pos = target;
                     } else {
                         // TODO: add a Collision component to the entity and resolve behavior in collision_system
                         collisions.insert(
@@ -129,6 +132,10 @@ impl<'a> System<'a> for MovementSystem {
                         );
                     }
                 }
+            }
+
+            for (entity, _) in (&entities, &projectiles).join() {
+                hiddens.remove(entity);
             }
         }
     }
