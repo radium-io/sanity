@@ -23,6 +23,7 @@ impl<'a> System<'a> for MovementSystem {
         WriteStorage<'a, crate::component::Position>,
         ReadStorage<'a, crate::component::Projectile>,
         ReadStorage<'a, crate::component::Enemy>,
+        ReadStorage<'a, crate::component::Health>,
     );
 
     fn run(
@@ -36,14 +37,16 @@ impl<'a> System<'a> for MovementSystem {
             mut positions,
             projectiles,
             enemies,
+            healths,
         ): Self::SystemData,
     ) {
         for tilemap in (&tilemaps).join() {
-            // handle projectiles colliding with non-projectiles
-            let enemy_positions: Vec<_> = (&entities, &positions, &enemies).join().collect();
+            let enemy_positions: Vec<_> =
+                (&entities, &positions, &enemies, &healths).join().collect();
 
+            // handle projectiles colliding with enemies
             for (p_ent, p_pos, _) in (&entities, &positions, &projectiles).join() {
-                for (c_ent, c_pos, _) in enemy_positions.iter() {
+                for (c_ent, c_pos, _, _) in enemy_positions.iter() {
                     if p_pos.pos == c_pos.pos {
                         println!("Colission");
                         // inserts a collision on the entity occupying space projectile is in

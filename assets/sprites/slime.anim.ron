@@ -57,7 +57,6 @@ Prefab(
                 animation_set: (
                     animations: [
                         (
-                            // AnimationId
                             0,
                             (
                                 samplers: [
@@ -70,6 +69,26 @@ Prefab(
                                             input: [0.0, 0.2, 0.4, 0.6, 0.8],
                                             // Sprite indexes from SpriteSheet for key frames
                                             output: [0, 1, 0, 2, 3],
+                                            // Sprites can only ever be animated with Step
+                                            function: Step,
+                                        ),
+                                    ),
+                                ],
+                            ),
+                        ),
+                                                (
+                            1,
+                            (
+                                samplers: [
+                                    (
+                                        0,
+                                        // Only SpriteIndex channel allowed for SpriteRender in AnimationSetPrefab
+                                        SpriteIndex,
+                                        (
+                                            // Time of key frames
+                                            input: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5],
+                                            // Sprite indexes from SpriteSheet for key frames
+                                            output: [32, 33, 34, 35, 36, 37],
                                             // Sprites can only ever be animated with Step
                                             function: Step,
                                         ),

@@ -1,13 +1,16 @@
 use amethyst::{
+    animation::{
+        get_animation_set, AnimationCommand, AnimationControlSet, AnimationSet, EndControl,
+    },
     core::{math::Point3, timing::Time, Transform},
     derive::SystemDesc,
     ecs::{
         prelude::{System, SystemData},
-        Entities, Join, LazyUpdate, ReadStorage,
+        Entities, Join, LazyUpdate, ReadStorage, WriteStorage,
     },
     input::{InputHandler, StringBindings},
     prelude::Builder,
-    renderer::Transparent,
+    renderer::{SpriteRender, Transparent},
     shred::{Read, ReadExpect},
     tiles::{Map, MapStorage, TileMap},
 };
@@ -33,15 +36,30 @@ impl<'a> System<'a> for ShootingSystem {
         ReadExpect<'a, crate::resource::Bullets>,
         Read<'a, LazyUpdate>,
         ReadStorage<'a, crate::component::Position>,
+        ReadStorage<'a, AnimationSet<usize, SpriteRender>>,
+        WriteStorage<'a, AnimationControlSet<usize, SpriteRender>>,
     );
 
     fn run(
         &mut self,
-        (entities, tilemaps, input, players, time, bullet_res, lazy, positions): Self::SystemData,
+        (
+            entities,
+            tilemaps,
+            input,
+            players,
+            time,
+            bullet_res,
+            lazy,
+            positions,
+            animation_sets,
+            mut control_sets,
+        ): Self::SystemData,
     ) {
         for tilemap in (&tilemaps).join() {
             if time.absolute_time() - self.last_move > Duration::from_millis(300) {
-                for (_, player_pos) in (&players, &positions).join() {
+                for (entity, _, player_pos, animation_set) in
+                    (&entities, &players, &positions, &animation_sets).join()
+                {
                     for shoot_dir in &[
                         ("shoot_up", North),
                         ("shoot_down", South),
@@ -75,6 +93,16 @@ impl<'a> System<'a> for ShootingSystem {
                                         .with(crate::component::MovementIntent { dir: shoot_dir.1 })
                                         .with(bullet_res.new_sprite())
                                         .build();
+
+                                    let control_set =
+                                        get_animation_set(&mut control_sets, entity).unwrap();
+                                    control_set.add_animation(
+                                        1,
+                                        &animation_set.get(&2).unwrap(),
+                                        EndControl::Normal,
+                                        1.0,
+                                        AnimationCommand::Start,
+                                    );
                                 }
                             }
                         }

@@ -37,6 +37,7 @@ impl<'a> System<'a> for SpawnSystem {
         ReadStorage<'a, AnimationSet<usize, SpriteRender>>,
         WriteStorage<'a, AnimationControlSet<usize, SpriteRender>>,
         ReadStorage<'a, crate::component::Position>,
+        ReadStorage<'a, crate::component::Health>,
     );
 
     fn run(
@@ -52,23 +53,13 @@ impl<'a> System<'a> for SpawnSystem {
             animation_sets,
             mut control_sets,
             positions,
+            healths,
         ): Self::SystemData,
     ) {
-        for (entity, animation_set, _) in (&entities, &animation_sets, &enemies).join() {
-            let control_set = get_animation_set(&mut control_sets, entity).unwrap();
-            control_set.add_animation(
-                0,
-                &animation_set.get(&0).unwrap(),
-                EndControl::Loop(None),
-                1.0,
-                AnimationCommand::Start,
-            );
-        }
-
-        let mut enemies = (&enemies).join().count();
+        let mut num_enemies = (&enemies, &healths).join().count();
         let max_enemies = 10;
 
-        if enemies < max_enemies {
+        if num_enemies < max_enemies {
             for tilemap in (&mut walls).join() {
                 let my_map = SanityMap(tilemap);
 
@@ -96,7 +87,8 @@ impl<'a> System<'a> for SpawnSystem {
                     let mut rng = thread_rng();
                     if let Some(spawnable) = near_to_far.rsplit(|x| *x.1 < 8.).next() {
                         // TODO: this should be based on visibility
-                        let positions = spawnable.choose_multiple(&mut rng, max_enemies - enemies);
+                        let positions =
+                            spawnable.choose_multiple(&mut rng, max_enemies - num_enemies);
 
                         for pos in positions {
                             println!("{:?}", pos);
@@ -117,11 +109,15 @@ impl<'a> System<'a> for SpawnSystem {
                                         .with(Transparent)
                                         .with(Hidden)
                                         .with(Position { pos: p })
+                                        .with(crate::component::Health {
+                                            max: 20,
+                                            current: 20,
+                                        })
                                         .with(t)
                                         .with(enemies_res.new_animated_sprite())
                                         .build();
 
-                                    enemies += 1;
+                                    num_enemies += 1;
                                     println!("Spawn at {:?}", p);
                                 }
                             }
@@ -129,6 +125,18 @@ impl<'a> System<'a> for SpawnSystem {
                     }
                 }
             }
+        }
+
+        for (entity, animation_set, _, _) in (&entities, &animation_sets, &enemies, &healths).join()
+        {
+            let control_set = get_animation_set(&mut control_sets, entity).unwrap();
+            control_set.add_animation(
+                0,
+                &animation_set.get(&0).unwrap(),
+                EndControl::Loop(None),
+                1.0,
+                AnimationCommand::Start,
+            );
         }
     }
 }
