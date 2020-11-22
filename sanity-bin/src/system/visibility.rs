@@ -1,3 +1,4 @@
+use amethyst::renderer::palette;
 use amethyst::{
     core::{math::Point3, Hidden},
     derive::SystemDesc,
@@ -34,7 +35,7 @@ impl<'a> System<'a> for VisibilitySystem {
                     let dim = *walls.dimensions();
                     let mut c = walls.clone();
                     let my_map = SanityMap(&mut c);
-                    let fov = field_of_view_set(position.pos, 4, &my_map);
+                    let fov = field_of_view_set(position.pos, 3, &my_map);
 
                     for x in 0..dim.x {
                         for y in 0..dim.y {
@@ -58,7 +59,11 @@ impl<'a> System<'a> for VisibilitySystem {
                                             tile.visible = vis;
                                             tile.visited = true;
                                         }
+                                    } else {
+                                        tile.tint = Some(palette::Srgba::new(1., 1., 1., 0.1));
                                     }
+                                } else if tile.walkable {
+                                    tile.tint = None;
                                 }
                             }
 

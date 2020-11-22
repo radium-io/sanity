@@ -66,8 +66,9 @@ impl<'a> System<'a> for SpawnSystem {
         }
 
         let mut enemies = (&enemies).join().count();
+        let max_enemies = 10;
 
-        if enemies < 1 {
+        if enemies < max_enemies {
             for tilemap in (&mut walls).join() {
                 let my_map = SanityMap(tilemap);
 
@@ -93,8 +94,9 @@ impl<'a> System<'a> for SpawnSystem {
                         .sort_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal));
 
                     let mut rng = thread_rng();
-                    if let Some(spawnable) = near_to_far.rsplit(|x| *x.1 < 2.).next() {
-                        let positions = spawnable.choose_multiple(&mut rng, 4);
+                    if let Some(spawnable) = near_to_far.rsplit(|x| *x.1 < 8.).next() {
+                        // TODO: this should be based on visibility
+                        let positions = spawnable.choose_multiple(&mut rng, max_enemies - enemies);
 
                         for pos in positions {
                             println!("{:?}", pos);
