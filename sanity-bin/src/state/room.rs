@@ -1,13 +1,18 @@
 use amethyst::{
     assets::{AssetStorage, Handle, Loader, ProgressCounter, RonFormat},
     core::{
-        math::{Point2, Vector3},
+        math::{Point2, Point3, Vector3},
         Named, Parent, Transform,
     },
     ecs::prelude::*,
     input::{is_close_requested, is_key_down},
     prelude::*,
-    renderer::{camera::Camera, Transparent},
+    renderer::{
+        camera::Camera,
+        debug_drawing::{DebugLines, DebugLinesComponent, DebugLinesParams},
+        palette::Srgba,
+        Transparent,
+    },
     tiles::TileMap,
     ui::UiCreator,
     window::ScreenDimensions,
@@ -55,7 +60,6 @@ fn init_camera(world: &mut World, player: Entity) {
 fn init_player(world: &mut World, start: Point, prog: &mut ProgressCounter) -> Entity {
     let mut t = Transform::default();
     t.move_up(8.);
-    t.move_forward(60.);
     let prefab = crate::resource::load_anim_prefab(world, "sprites/Space Cadet.anim.ron", prog);
     world
         .create_entity()
@@ -102,7 +106,6 @@ impl RoomState {
         );
 
         let mut t = Transform::default();
-        t.move_forward(10.);
         world
             .create_entity()
             .with(floor)
@@ -117,7 +120,6 @@ impl RoomState {
         );
 
         let mut t = Transform::default();
-        t.move_forward(50.);
         world
             .create_entity()
             .with(walls)
