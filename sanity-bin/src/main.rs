@@ -121,7 +121,17 @@ fn main() -> Result<()> {
         .with(
             system::lose::LoseSystem::default(),
             "lose_system",
-            &["hud_system"],
+            &["collision_system"],
+        )
+        .with(
+            system::death::DeathSystem::default(),
+            "death_system",
+            &["collision_system"],
+        )
+        .with(
+            system::idle::IdleSystem::default(),
+            "idle_system",
+            &["collision_system"],
         )
         .with(Processor::<sanity_lib::assets::Pairs>::new(), "", &[])
         .with_bundle(

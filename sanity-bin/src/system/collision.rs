@@ -23,8 +23,6 @@ impl<'a> System<'a> for CollisionSystem {
         ReadStorage<'a, crate::component::Projectile>,
         ReadStorage<'a, crate::component::Player>,
         ReadStorage<'a, crate::component::Enemy>,
-        ReadStorage<'a, AnimationSet<usize, SpriteRender>>,
-        WriteStorage<'a, AnimationControlSet<usize, SpriteRender>>,
         WriteStorage<'a, crate::component::Health>,
         WriteStorage<'a, TileMap<FloorTile>>,
     );
@@ -37,8 +35,6 @@ impl<'a> System<'a> for CollisionSystem {
             projectiles,
             players,
             enemies,
-            animation_sets,
-            mut control_sets,
             mut healths,
             mut floor_maps,
         ): Self::SystemData,
@@ -55,16 +51,7 @@ impl<'a> System<'a> for CollisionSystem {
             }
         }
 
-        let mut killed: Vec<Entity> = vec![];
-        for (entity, collision, animation_set, _enemy, health) in (
-            &entities,
-            &collisions,
-            &animation_sets,
-            &enemies,
-            &mut healths,
-        )
-            .join()
-        {
+        for (collision, _enemy, health) in (&collisions, &enemies, &mut healths).join() {
             if let Some(with) = collision.with {
                 if let Some(proj) = projectiles.get(with) {
                     health.current -= proj.damage as i32;
@@ -72,22 +59,6 @@ impl<'a> System<'a> for CollisionSystem {
                     health.current -= 10;
                 }
             }
-            if health.current <= 0 {
-                let control_set = get_animation_set(&mut control_sets, entity).unwrap();
-                control_set.abort(0);
-                control_set.add_animation(
-                    1,
-                    &animation_set.get(&1).unwrap(),
-                    EndControl::Stay,
-                    4.0,
-                    AnimationCommand::Start,
-                );
-                killed.push(entity);
-            }
-        }
-
-        for e in killed {
-            healths.remove(e);
         }
 
         let mut collisions_to_remove = vec![];

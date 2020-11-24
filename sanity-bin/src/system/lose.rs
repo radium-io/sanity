@@ -1,9 +1,13 @@
 use amethyst::{
+    animation::{
+        get_animation_set, AnimationCommand, AnimationControlSet, AnimationSet, EndControl,
+    },
     core::timing::Time,
     derive::SystemDesc,
     ecs::prelude::{
         Entities, Entity, Join, Read, ReadStorage, System, SystemData, Write, WriteStorage,
     },
+    renderer::{SpriteRender, Transparent},
     ui::{UiFinder, UiText, UiTransform},
     utils::fps_counter::FpsCounter,
 };
@@ -20,7 +24,7 @@ impl<'a> System<'a> for LoseSystem {
 
     fn run(&mut self, (players, healths, mut sanity_res): Self::SystemData) {
         for (player, health) in (&players, &healths).join() {
-            if health.current <= 0 {
+            if health.current <= 0 && !sanity_res.game_over {
                 sanity_res.game_over = true;
             }
         }

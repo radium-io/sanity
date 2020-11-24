@@ -76,7 +76,7 @@ Prefab(
                                 ],
                             ),
                         ),
-                                                (
+                        (
                             // AnimationId
                             2,
                             (
@@ -97,6 +97,24 @@ Prefab(
                                 ],
                             ),
                         ),
+                                                (
+                            // AnimationId
+                            1,
+                            (
+                                samplers: [
+                                    (
+                                        0,
+                                        SpriteIndex,
+                                        (
+                                            input: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8],
+                                            output: [32, 33, 34, 35, 36, 37, 38, 39, 4],
+                                            function: Step,
+                                        ),
+                                    ),
+                                ],
+                            ),
+                        ),
+
                     ],
                 ),
             ),
