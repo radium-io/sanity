@@ -30,6 +30,7 @@ use serde::Deserialize;
 use std::{fmt::Debug, marker::PhantomData};
 
 mod component;
+mod gamedata;
 mod map;
 mod resource;
 mod state;
@@ -63,78 +64,78 @@ fn main() -> Result<()> {
     .into_linear()
     .into_components();
 
-    let game_data = GameDataBuilder::default()
-        .with_system_desc(
+    let game_data = gamedata::CustomGameDataBuilder::default()
+        .with_base(
             PrefabLoaderSystemDesc::<MyPrefabData>::default(),
             "scene_loader",
             &[],
         )
-        .with(CameraOrthoSystem::default(), "ortho_camera_system", &[])
-        .with_bundle(HotReloadBundle::new(HotReloadStrategy::every(2)))?
-        .with_bundle(AnimationBundle::<usize, SpriteRender>::new(
+        //.with_base(CameraOrthoSystem::default(), "ortho_camera_system", &[])
+        .with_base_bundle(HotReloadBundle::new(HotReloadStrategy::every(2)))
+        .with_base_bundle(AnimationBundle::<usize, SpriteRender>::new(
             "sprite_animation_control",
             "sprite_sampler_interpolation",
-        ))?
-        .with_bundle(TransformBundle::new())?
-        .with_bundle(
+        ))
+        .with_base_bundle(TransformBundle::new())
+        .with_base_bundle(
             InputBundle::<StringBindings>::new()
                 .with_bindings_from_file(&app_root.join("config/input.ron"))?,
-        )?
-        .with_bundle(UiBundle::<StringBindings>::new())?
-        .with_bundle(FpsCounterBundle::default())?
-        .with(system::fps::FPSSystem::default(), "fps_system", &[])
-        .with(
+        )
+        .with_base_bundle(UiBundle::<StringBindings>::new())
+        .with_base_bundle(FpsCounterBundle::default())
+        .with_base(system::fps::FPSSystem::default(), "fps_system", &[])
+        .with_base(
             system::visibility::VisibilitySystem::default(),
             "visibility_system",
             &[],
         )
-        .with(
+        .with_running(
             system::shooting::ShootingSystem::default(),
             "shooting_system",
-            &["input_system"],
+            &[],
         )
-        .with(
+        .with_running(
             system::player::PlayerSystem::default(),
             "player_system",
-            &["input_system"],
+            &[],
         )
-        .with(
+        .with_base(
             system::movement::MovementSystem::default(),
             "movement_system",
-            &["input_system", "player_system", "shooting_system"],
+            &[],
         )
-        .with(
+        .with_base(
             system::collision::CollisionSystem::default(),
             "collision_system",
             &["movement_system"],
         )
-        .with(
+        .with_base(
             system::spawn::SpawnSystem::default(),
             "spawn_system",
             &["collision_system"],
         )
-        .with(
+        .with_base(
             system::hud::HUDSystem::default(),
             "hud_system",
             &["collision_system"],
         )
-        .with(
+        .with_base(
             system::lose::LoseSystem::default(),
             "lose_system",
             &["collision_system"],
         )
-        .with(
+        .with_base(
             system::death::DeathSystem::default(),
             "death_system",
             &["collision_system"],
         )
-        .with(
+        .with_base(
             system::idle::IdleSystem::default(),
             "idle_system",
             &["collision_system"],
         )
-        .with(Processor::<sanity_lib::assets::Pairs>::new(), "", &[])
-        .with_bundle(
+        .with_base(Processor::<sanity_lib::assets::Pairs>::new(), "", &[])
+        .with_base_bundle(
             RenderingBundle::<DefaultBackend>::new()
                 .with_plugin(
                     RenderToWindow::from_config_path(app_root.join("config/display_config.ron"))?
@@ -144,7 +145,7 @@ fn main() -> Result<()> {
                 .with_plugin(RenderFlat2D::default())
                 .with_plugin(RenderTiles2D::<sanity_lib::tile::FloorTile>::default())
                 .with_plugin(RenderTiles2DTransparent::<sanity_lib::tile::RoomTile>::default()),
-        )?;
+        );
 
     let mut game = Application::build(
         app_root.parent().unwrap().join("assets"),

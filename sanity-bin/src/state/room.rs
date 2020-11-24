@@ -160,9 +160,10 @@ impl RoomState {
         );
     }
 }
+use crate::gamedata::CustomGameData;
 
-impl SimpleState for RoomState {
-    fn on_start(&mut self, data: StateData<'_, GameData<'_, '_>>) {
+impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for RoomState {
+    fn on_start(&mut self, data: StateData<'_, CustomGameData<'a, 'b>>) {
         let StateData { mut world, .. } = data;
 
         // register components, may be able to remove if used by system
@@ -203,7 +204,12 @@ impl SimpleState for RoomState {
         });
     }
 
-    fn update(&mut self, data: &mut StateData<'_, GameData<'_, '_>>) -> SimpleTrans {
+    fn update(
+        &mut self,
+        data: StateData<'_, CustomGameData<'_, '_>>,
+    ) -> Trans<CustomGameData<'a, 'b>, StateEvent> {
+        data.data.update(&data.world, true);
+
         if self.progress_counter.is_complete() && self.map_generation < 1 {
             self.gen_map_exec(data.world);
             self.map_generation += 1;
@@ -211,6 +217,7 @@ impl SimpleState for RoomState {
 
         let mut sanity_res = data.world.read_resource::<crate::state::Sanity>();
         if sanity_res.game_over {
+            println!("Game Over");
             return Trans::Switch(Box::new(super::gameover::GameOverState));
         }
         Trans::None
@@ -218,9 +225,9 @@ impl SimpleState for RoomState {
 
     fn handle_event(
         &mut self,
-        data: StateData<'_, GameData<'_, '_>>,
+        data: StateData<'_, CustomGameData<'a, 'b>>,
         event: StateEvent,
-    ) -> SimpleTrans {
+    ) -> Trans<CustomGameData<'a, 'b>, StateEvent> {
         if let StateEvent::Window(event) = &event {
             if is_close_requested(&event) || is_key_down(&event, winit::VirtualKeyCode::Escape) {
                 Trans::Quit
