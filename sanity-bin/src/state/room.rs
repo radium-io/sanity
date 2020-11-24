@@ -186,6 +186,8 @@ impl SimpleState for RoomState {
         );
         world.insert(crate::resource::Enemies { anims });
 
+        world.insert(crate::state::Sanity::default());
+
         let player = init_player(
             world,
             Point::new(self.width / 2, self.height / 2),
@@ -197,6 +199,7 @@ impl SimpleState for RoomState {
         // FIXME: move to global state?
         world.exec(|mut creator: UiCreator<'_>| {
             creator.create("ui/fps.ron", ());
+            creator.create("ui/hud.ron", ());
         });
     }
 
@@ -204,11 +207,13 @@ impl SimpleState for RoomState {
         if self.progress_counter.is_complete() && self.map_generation < 1 {
             self.gen_map_exec(data.world);
             self.map_generation += 1;
-
-            Trans::None
-        } else {
-            Trans::None
         }
+
+        let mut sanity_res = data.world.read_resource::<crate::state::Sanity>();
+        if sanity_res.game_over {
+            return Trans::Switch(Box::new(super::gameover::GameOverState));
+        }
+        Trans::None
     }
 
     fn handle_event(

@@ -1,5 +1,7 @@
 pub mod collision;
 pub mod fps;
+pub mod hud;
+pub mod lose;
 pub mod movement;
 pub mod player;
 pub mod shooting;

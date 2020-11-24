@@ -113,6 +113,16 @@ fn main() -> Result<()> {
             "spawn_system",
             &["collision_system"],
         )
+        .with(
+            system::hud::HUDSystem::default(),
+            "hud_system",
+            &["collision_system"],
+        )
+        .with(
+            system::lose::LoseSystem::default(),
+            "lose_system",
+            &["hud_system"],
+        )
         .with(Processor::<sanity_lib::assets::Pairs>::new(), "", &[])
         .with_bundle(
             RenderingBundle::<DefaultBackend>::new()

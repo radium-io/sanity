@@ -43,13 +43,20 @@ impl<'a> System<'a> for CollisionSystem {
             mut floor_maps,
         ): Self::SystemData,
     ) {
-        for (entity, _) in (&entities, &players).join() {
-            // TODO: play wall collision ugh noise
-            collisions.remove(entity);
+        for (entity, _player, collision) in (&entities, &players, &collisions).join() {
+            if collision.with.is_some() {
+                if let Some(enemy_health) = healths.get(collision.with.unwrap()) {
+                    if enemy_health.current > 0 {
+                        if let Some(h) = healths.get_mut(entity) {
+                            h.current -= 10; // TODO: depend upon monsters weapon
+                        }
+                    }
+                }
+            }
         }
 
         let mut killed: Vec<Entity> = vec![];
-        for (entity, collision, animation_set, _, health) in (
+        for (entity, collision, animation_set, _enemy, health) in (
             &entities,
             &collisions,
             &animation_sets,
