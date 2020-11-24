@@ -1,8 +1,5 @@
 use crate::{component::Position, resource::Animated};
 use amethyst::{
-    animation::{
-        get_animation_set, AnimationCommand, AnimationControlSet, AnimationSet, EndControl,
-    },
     core::{math::Point3, Hidden, Transform},
     derive::SystemDesc,
     ecs::{
@@ -34,8 +31,6 @@ impl<'a> System<'a> for SpawnSystem {
         Read<'a, LazyUpdate>,
         ReadExpect<'a, crate::resource::Enemies>,
         ReadStorage<'a, crate::component::Enemy>,
-        ReadStorage<'a, AnimationSet<usize, SpriteRender>>,
-        WriteStorage<'a, AnimationControlSet<usize, SpriteRender>>,
         ReadStorage<'a, crate::component::Position>,
         ReadStorage<'a, crate::component::Health>,
     );
@@ -50,8 +45,6 @@ impl<'a> System<'a> for SpawnSystem {
             lazy,
             enemies_res,
             enemies,
-            animation_sets,
-            mut control_sets,
             positions,
             healths,
         ): Self::SystemData,
@@ -132,18 +125,6 @@ impl<'a> System<'a> for SpawnSystem {
                     }
                 }
             }
-        }
-
-        for (entity, animation_set, _, _) in (&entities, &animation_sets, &enemies, &healths).join()
-        {
-            let control_set = get_animation_set(&mut control_sets, entity).unwrap();
-            control_set.add_animation(
-                0,
-                &animation_set.get(&0).unwrap(),
-                EndControl::Loop(None),
-                1.0,
-                AnimationCommand::Start,
-            );
         }
     }
 }

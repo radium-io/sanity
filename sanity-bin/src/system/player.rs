@@ -1,7 +1,4 @@
 use amethyst::{
-    animation::{
-        get_animation_set, AnimationCommand, AnimationControlSet, AnimationSet, EndControl,
-    },
     core::timing::Time,
     derive::SystemDesc,
     ecs::{
