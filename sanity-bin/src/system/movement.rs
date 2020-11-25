@@ -98,6 +98,19 @@ impl<'a> System<'a> for MovementSystem {
 
                     if target == player_pos.pos {
                         // enemy attacks player
+                        if let Some(animation_set) = animation_sets.get(entity) {
+                            let control_set = get_animation_set(&mut control_sets, entity).unwrap();
+                            if let Some(attack_anim) = animation_set.get(&2) {
+                                control_set.add_animation(
+                                    2,
+                                    &attack_anim,
+                                    EndControl::Stay,
+                                    2.0,
+                                    AnimationCommand::Start,
+                                );
+                            }
+                        }
+
                         intents_to_cancel.push(entity);
                         collisions.insert(
                             entity,

@@ -30,6 +30,7 @@ impl<'a> System<'a> for DeathSystem {
             if health.current <= 0 {
                 let control_set = get_animation_set(&mut control_sets, entity).unwrap();
                 control_set.abort(0);
+                control_set.abort(2);
                 control_set.abort(3);
                 control_set.add_animation(
                     1,
