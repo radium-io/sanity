@@ -99,7 +99,7 @@ fn main() -> Result<()> {
             "player_system",
             &[],
         )
-        .with_running(system::ai::AISystem::default(), "ai_system", &[])
+        .with_base(system::ai::AISystem::default(), "ai_system", &[])
         .with_base(
             system::movement::MovementSystem::default(),
             "movement_system",

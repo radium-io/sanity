@@ -27,8 +27,14 @@ impl<'a> System<'a> for PlayerSystem {
 
     fn run(&mut self, (input, players, mut intents, time, entities): Self::SystemData) {
         for (entity, _) in (&entities, &players).join() {
-            // stop all movement intents from last player action
-            intents.remove(entity);
+            if let Some(intent) = intents.get(entity) {
+                if intent.step == 0 {
+                    // stop all movement intents from last player action
+                    intents.remove(entity);
+                } else {
+                    return;
+                }
+            }
 
             // check if player is attempting to move again
             if time.absolute_time() - self.last_move > Duration::from_millis(150) {
@@ -39,9 +45,16 @@ impl<'a> System<'a> for PlayerSystem {
                     ("right", direction::CardinalDirection::East),
                 ] {
                     if input.action_is_down(dir.0).unwrap_or(false) {
+                        println!("{}", dir.0);
                         self.last_move = time.absolute_time();
                         intents
-                            .insert(entity, crate::component::MovementIntent { dir: dir.1 })
+                            .insert(
+                                entity,
+                                crate::component::MovementIntent {
+                                    dir: dir.1,
+                                    step: 5,
+                                },
+                            )
                             .unwrap();
                     }
                 }

@@ -39,8 +39,16 @@ impl<'a> System<'a> for AISystem {
         (entities, mut tilemaps, mut intents, mut positions, enemies, players, healths, time): Self::SystemData,
     ) {
         for (entity, enemy) in (&entities, &enemies).join() {
-            intents.remove(entity);
+            if let Some(intent) = intents.get(entity) {
+                if intent.step == 0 {
+                    // stop all movement intents from last player action
+                    intents.remove(entity);
+                } else {
+                    return;
+                }
+            }
         }
+
         if time.absolute_time() - self.last_move > Duration::from_millis(2000) {
             self.last_move = time.absolute_time();
 
@@ -50,7 +58,7 @@ impl<'a> System<'a> for AISystem {
 
                 let my_map = sanity_lib::map::SanityMap(tilemap);
 
-                for (player, player_pos) in (&players, &positions).join() {
+                for (player, player_pos, player_health) in (&players, &positions, &healths).join() {
                     let player_idx =
                         my_map.point2d_to_index(Point::new(player_pos.pos.x, player_pos.pos.y));
 
@@ -75,9 +83,10 @@ impl<'a> System<'a> for AISystem {
                                         dir: direction::CardinalDirection::from_unit_coord(
                                             direction::Coord::new(coord_pt.x, coord_pt.y),
                                         ),
+                                        step: 5,
                                     },
                                 );
-                            } else {
+                            } else if player_health.current > 0 {
                                 println!("Attack!");
 
                                 intents.insert(
@@ -89,6 +98,15 @@ impl<'a> System<'a> for AISystem {
                                                 player_coord_pt.y,
                                             ),
                                         ),
+                                        step: 5,
+                                    },
+                                );
+                            } else {
+                                intents.insert(
+                                    entity,
+                                    crate::component::MovementIntent {
+                                        dir: rand::random(),
+                                        step: 5,
                                     },
                                 );
                             }

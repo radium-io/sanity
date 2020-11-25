@@ -1168,6 +1168,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "2428febe49a97ac5371873840ab6b4c88aa78b9914d4ea2d580fe0050f047867"
 dependencies = [
  "coord_2d",
+ "rand 0.7.3",
 ]
 
 [[package]]

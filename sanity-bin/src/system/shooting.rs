@@ -92,6 +92,7 @@ impl<'a> System<'a> for ShootingSystem {
                                             .with(player_pos.clone())
                                             .with(crate::component::MovementIntent {
                                                 dir: shoot_dir.1,
+                                                step: 5,
                                             })
                                             .with(bullet_res.new_sprite())
                                             .build();

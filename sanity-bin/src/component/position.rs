@@ -6,7 +6,6 @@ use std::ops::Add;
 #[derive(Clone)]
 pub struct Position {
     pub pos: Point,
-    pub step: usize,
 }
 
 impl Component for Position {
@@ -28,7 +27,6 @@ impl Add<direction::CardinalDirection> for Position {
         let c = other.coord();
         Self {
             pos: Point::new(self.pos.x + c.x, self.pos.y + c.y),
-            step: 0,
         }
     }
 }

@@ -79,10 +79,7 @@ fn init_player(world: &mut World, start: Point, prog: &mut ProgressCounter) -> E
             max: 30,
             current: 30,
         })
-        .with(crate::component::Position {
-            pos: start,
-            step: 0,
-        })
+        .with(crate::component::Position { pos: start })
         .with(prefab)
         .with(t)
         .build()

@@ -1,10 +1,15 @@
 use amethyst::{
+    animation::{
+        get_animation_set, AnimationCommand, AnimationControlSet, AnimationSet, DeferStartRelation,
+        EndControl,
+    },
     core::{math::Point3, Hidden, Transform},
     derive::SystemDesc,
     ecs::{
         prelude::{System, SystemData, WriteStorage},
         Entities, Entity, Join, ReadStorage,
     },
+    renderer::SpriteRender,
     tiles::{Map, MapStorage, TileMap},
 };
 use bracket_pathfinding::prelude::Point;
@@ -26,6 +31,8 @@ impl<'a> System<'a> for MovementSystem {
         ReadStorage<'a, crate::component::Health>,
         WriteStorage<'a, Hidden>,
         ReadStorage<'a, crate::component::Player>,
+        ReadStorage<'a, AnimationSet<usize, SpriteRender>>,
+        WriteStorage<'a, AnimationControlSet<usize, SpriteRender>>,
     );
 
     fn run(
@@ -42,13 +49,15 @@ impl<'a> System<'a> for MovementSystem {
             healths,
             mut hiddens,
             players,
+            animation_sets,
+            mut control_sets,
         ): Self::SystemData,
     ) {
         for tilemap in (&tilemaps).join() {
             let enemy_positions: Vec<_> =
                 (&entities, &positions, &enemies, &healths).join().collect();
 
-            // walked in to enemy
+            // player walked in to enemy
             let mut intents_to_cancel: Vec<Entity> = vec![];
             for (entity, position, intent, _) in
                 (&entities, &positions, &mut intents, &players).join()
@@ -88,7 +97,7 @@ impl<'a> System<'a> for MovementSystem {
                     let target = position.pos + p;
 
                     if target == player_pos.pos {
-                        // there's an enemy on this position
+                        // enemy attacks player
                         intents_to_cancel.push(entity);
                         collisions.insert(
                             entity,
@@ -110,14 +119,13 @@ impl<'a> System<'a> for MovementSystem {
                     }
                 }
             }
-
             for ent in intents_to_cancel.iter() {
                 intents.remove(*ent);
             }
 
             // move the enemy or player or projectile
             for (entity, position, intent, transform) in
-                (&entities, &mut positions, &intents, &mut transforms).join()
+                (&entities, &mut positions, &mut intents, &mut transforms).join()
             {
                 let c = intent.dir.coord();
                 let p = Point::new(c.x, c.y);
@@ -125,14 +133,35 @@ impl<'a> System<'a> for MovementSystem {
 
                 if let Some(tile) = tilemap.get(&Point3::new(target.x as u32, target.y as u32, 0)) {
                     if tile.walkable {
-                        transform
-                            .prepend_translation_x(c.x as f32 * tilemap.tile_dimensions().x as f32);
+                        if let Some(animation_set) = animation_sets.get(entity) {
+                            let control_set = get_animation_set(&mut control_sets, entity).unwrap();
+                            if let Some(jump_anim) = animation_set.get(&3) {
+                                control_set.add_animation(
+                                    3,
+                                    &jump_anim,
+                                    EndControl::Stay,
+                                    2.0,
+                                    AnimationCommand::Start,
+                                );
+                            }
+                        }
+
+                        transform.prepend_translation_x(
+                            c.x as f32 * tilemap.tile_dimensions().x as f32 / 5.,
+                        );
                         transform.prepend_translation_y(
-                            -c.y as f32 * tilemap.tile_dimensions().y as f32,
+                            -c.y as f32 * tilemap.tile_dimensions().y as f32 / 5.,
                             // note: world coords are inverted from grid coords on y
                         );
 
-                        position.pos = target;
+                        intent.step -= 1;
+
+                        if intent.step == 0 {
+                            position.pos = target;
+                            if projectiles.get(entity).is_some() {
+                                intent.step = 5;
+                            }
+                        }
                     } else {
                         // TODO: add a Collision component to the entity and resolve behavior in collision_system
                         collisions.insert(
@@ -142,8 +171,13 @@ impl<'a> System<'a> for MovementSystem {
                                 with: None,
                             },
                         );
+                        intents_to_cancel.push(entity);
                     }
                 }
+            }
+
+            for ent in intents_to_cancel.iter() {
+                intents.remove(*ent);
             }
 
             let enemy_positions: Vec<_> =
