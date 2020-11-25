@@ -61,10 +61,20 @@ fn init_player(world: &mut World, start: Point, prog: &mut ProgressCounter) -> E
     let mut t = Transform::default();
     t.move_up(8.);
     let prefab = crate::resource::load_anim_prefab(world, "sprites/Space Cadet.anim.ron", prog);
+    let weapon = world
+        .create_entity()
+        .with(crate::component::Weapon {
+            damage_range: (3, 8),
+            ranged: true,
+        })
+        .named("Blaster")
+        .build();
     world
         .create_entity()
         .with(Transparent)
-        .with(crate::component::Player)
+        .with(crate::component::Player {
+            weapon: Some(weapon),
+        })
         .with(crate::component::Health {
             max: 30,
             current: 30,

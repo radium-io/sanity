@@ -1,8 +1,10 @@
-use amethyst::ecs::{Component, NullStorage};
+use amethyst::ecs::{Component, Entity, HashMapStorage};
 
 #[derive(Debug, Default)]
-pub struct Player;
+pub struct Player {
+    pub weapon: Option<Entity>,
+}
 
 impl Component for Player {
-    type Storage = NullStorage<Self>;
+    type Storage = HashMapStorage<Self>;
 }

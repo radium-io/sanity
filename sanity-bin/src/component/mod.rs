@@ -6,6 +6,7 @@ mod movement;
 mod player;
 mod position;
 mod projectile;
+mod weapon;
 
 pub use collision::Collision;
 pub use dijkstra::Dijkstra;
@@ -15,3 +16,4 @@ pub use movement::MovementIntent;
 pub use player::Player;
 pub use position::Position;
 pub use projectile::Projectile;
+pub use weapon::Weapon;
