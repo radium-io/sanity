@@ -1,3 +1,4 @@
+pub mod ai;
 pub mod collision;
 pub mod death;
 pub mod fps;

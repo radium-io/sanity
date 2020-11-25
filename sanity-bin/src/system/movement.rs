@@ -25,6 +25,7 @@ impl<'a> System<'a> for MovementSystem {
         ReadStorage<'a, crate::component::Enemy>,
         ReadStorage<'a, crate::component::Health>,
         WriteStorage<'a, Hidden>,
+        ReadStorage<'a, crate::component::Player>,
     );
 
     fn run(
@@ -40,6 +41,7 @@ impl<'a> System<'a> for MovementSystem {
             enemies,
             healths,
             mut hiddens,
+            players,
         ): Self::SystemData,
     ) {
         for tilemap in (&tilemaps).join() {
@@ -49,7 +51,7 @@ impl<'a> System<'a> for MovementSystem {
             // walked in to enemy
             let mut intents_to_cancel: Vec<Entity> = vec![];
             for (entity, position, intent, _) in
-                (&entities, &positions, &mut intents, !&projectiles).join()
+                (&entities, &positions, &mut intents, &players).join()
             {
                 let c = intent.dir.coord();
                 let p = Point::new(c.x, c.y);
@@ -72,6 +74,40 @@ impl<'a> System<'a> for MovementSystem {
                             with: Some(entity),
                         },
                     );
+                }
+            }
+
+            for (player_ent, player, player_pos, _) in
+                (&entities, &players, &positions, &healths).join()
+            {
+                for (entity, position, intent, _) in
+                    (&entities, &positions, &mut intents, &enemies).join()
+                {
+                    let c = intent.dir.coord();
+                    let p = Point::new(c.x, c.y);
+                    let target = position.pos + p;
+
+                    if target == player_pos.pos {
+                        // there's an enemy on this position
+                        intents_to_cancel.push(entity);
+                        collisions.insert(
+                            entity,
+                            crate::component::Collision {
+                                location: target,
+                                with: Some(player_ent),
+                            },
+                        );
+                        collisions.insert(
+                            player_ent,
+                            crate::component::Collision {
+                                location: target,
+                                with: Some(entity),
+                            },
+                        );
+                    } else if let Some(enemy) = enemy_positions.iter().find(|x| x.1.pos == target) {
+                        // there's an enemy on this position
+                        intents_to_cancel.push(entity);
+                    }
                 }
             }
 

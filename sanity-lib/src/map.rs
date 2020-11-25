@@ -58,25 +58,25 @@ impl<'a> BaseMap for SanityMap<'a> {
         if let Some(idx) = self.valid_exit(location, Point::new(0, 1)) {
             exits.push((idx, 1.0))
         }
-
-        if let Some(idx) = self.valid_exit(location, Point::new(-1, -1)) {
-            exits.push((idx, 1.4))
-        }
-        if let Some(idx) = self.valid_exit(location, Point::new(1, -1)) {
-            exits.push((idx, 1.4))
-        }
-        if let Some(idx) = self.valid_exit(location, Point::new(-1, 1)) {
-            exits.push((idx, 1.4))
-        }
-        if let Some(idx) = self.valid_exit(location, Point::new(1, 1)) {
-            exits.push((idx, 1.4))
-        }
-
+        /*
+                if let Some(idx) = self.valid_exit(location, Point::new(-1, -1)) {
+                    exits.push((idx, 1.4))
+                }
+                if let Some(idx) = self.valid_exit(location, Point::new(1, -1)) {
+                    exits.push((idx, 1.4))
+                }
+                if let Some(idx) = self.valid_exit(location, Point::new(-1, 1)) {
+                    exits.push((idx, 1.4))
+                }
+                if let Some(idx) = self.valid_exit(location, Point::new(1, 1)) {
+                    exits.push((idx, 1.4))
+                }
+        */
         exits
     }
 
     fn get_pathing_distance(&self, idx1: usize, idx2: usize) -> f32 {
-        DistanceAlg::Pythagoras.distance2d(self.index_to_point2d(idx1), self.index_to_point2d(idx2))
+        DistanceAlg::Manhattan.distance2d(self.index_to_point2d(idx1), self.index_to_point2d(idx2))
     }
 }
 
