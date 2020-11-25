@@ -91,3 +91,5 @@ modules.xml
 
 # End of https://www.toptal.com/developers/gitignore/api/pycharm+iml,rust
 temp/
+
+*.bak
