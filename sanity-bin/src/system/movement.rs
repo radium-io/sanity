@@ -1,7 +1,6 @@
 use amethyst::{
     animation::{
-        get_animation_set, AnimationCommand, AnimationControlSet, AnimationSet, DeferStartRelation,
-        EndControl,
+        get_animation_set, AnimationCommand, AnimationControlSet, AnimationSet, EndControl,
     },
     core::{math::Point3, Hidden, Transform},
     derive::SystemDesc,

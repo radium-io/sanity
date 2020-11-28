@@ -1,15 +1,10 @@
 use amethyst::{
-    animation::{
-        get_animation_set, AnimationCommand, AnimationControlSet, AnimationSet, EndControl,
-    },
-    core::{math::Point3, Hidden, Transform},
     derive::SystemDesc,
     ecs::{
         prelude::{System, SystemData, WriteStorage},
-        Entities, Entity, Join, ReadStorage,
+        Entities, Join, ReadStorage,
     },
-    renderer::{palette, SpriteRender, Transparent},
-    tiles::{Map, MapStorage, TileMap},
+    tiles::TileMap,
 };
 use sanity_lib::tile::FloorTile;
 

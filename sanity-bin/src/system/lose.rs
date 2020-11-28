@@ -1,15 +1,6 @@
 use amethyst::{
-    animation::{
-        get_animation_set, AnimationCommand, AnimationControlSet, AnimationSet, EndControl,
-    },
-    core::timing::Time,
     derive::SystemDesc,
-    ecs::prelude::{
-        Entities, Entity, Join, Read, ReadStorage, System, SystemData, Write, WriteStorage,
-    },
-    renderer::{SpriteRender, Transparent},
-    ui::{UiFinder, UiText, UiTransform},
-    utils::fps_counter::FpsCounter,
+    ecs::prelude::{Entities, Join, ReadStorage, System, SystemData, Write},
 };
 
 #[derive(Default, SystemDesc)]

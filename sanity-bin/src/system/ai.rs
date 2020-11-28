@@ -1,21 +1,15 @@
 use amethyst::{
     core::timing::Time,
-    core::{math::Point3, Hidden, Transform},
     derive::SystemDesc,
     ecs::{
         prelude::{Read, System, SystemData, WriteStorage},
-        Entities, Entity, Join, ReadStorage,
+        Entities, Join, ReadStorage,
     },
-    tiles::{Map, MapStorage, TileMap},
+    tiles::{Map, TileMap},
 };
-use bracket_pathfinding::prelude::Point;
-use bracket_pathfinding::prelude::*;
+use bracket_pathfinding::prelude::{Point, *};
 use core::time::Duration;
-use rand::seq::SliceRandom;
-use rand::thread_rng;
-use sanity_lib::map::SanityMap;
 use sanity_lib::tile::RoomTile;
-use std::cmp::Ordering;
 
 #[derive(Default, SystemDesc)]
 pub struct AISystem {
@@ -36,7 +30,7 @@ impl<'a> System<'a> for AISystem {
 
     fn run(
         &mut self,
-        (entities, mut tilemaps, mut intents, mut positions, enemies, players, healths, time): Self::SystemData,
+        (entities, mut tilemaps, mut intents, positions, enemies, players, healths, time): Self::SystemData,
     ) {
         for (entity, enemy) in (&entities, &enemies).join() {
             if let Some(intent) = intents.get(entity) {

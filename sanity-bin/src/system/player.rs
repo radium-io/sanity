@@ -6,7 +6,6 @@ use amethyst::{
         Entities, Join, ReadStorage,
     },
     input::{InputHandler, StringBindings},
-    renderer::SpriteRender,
     shred::Read,
 };
 use core::time::Duration;

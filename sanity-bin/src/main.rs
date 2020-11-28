@@ -1,8 +1,9 @@
 use amethyst::{
     animation::{AnimationBundle, AnimationSetPrefab},
-    assets::{Handle, Processor},
-    assets::{HotReloadBundle, HotReloadStrategy},
-    assets::{PrefabData, PrefabLoaderSystemDesc, ProgressCounter},
+    assets::{
+        Handle, HotReloadBundle, HotReloadStrategy, PrefabData, PrefabLoaderSystemDesc, Processor,
+        ProgressCounter,
+    },
     core::{frame_limiter::FrameRateLimitStrategy, transform::TransformBundle, Hidden},
     derive::PrefabData,
     ecs::{prelude::*, ReadStorage, SystemData, World},
@@ -22,7 +23,6 @@ use amethyst::{
         MortonEncoder2D, RenderTiles2D, Tile, TileMap,
     },
     ui::{RenderUi, UiBundle},
-    utils::ortho_camera::CameraOrthoSystem,
     utils::{application_root_dir, fps_counter::FpsCounterBundle},
     Error, Result,
 };

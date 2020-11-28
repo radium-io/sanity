@@ -7,20 +7,17 @@ use amethyst::{
         Entities, Join, LazyUpdate, ReadStorage,
     },
     prelude::*,
-    renderer::{SpriteRender, Transparent},
+    renderer::Transparent,
     shred::{Read, ReadExpect},
-    tiles::{Map, MapStorage, TileMap},
+    tiles::{Map, TileMap},
 };
-use bracket_pathfinding::prelude::{Point, *};
-use rand::seq::SliceRandom;
-use rand::thread_rng;
+use bracket_pathfinding::prelude::*;
+use rand::{seq::SliceRandom, thread_rng};
 use sanity_lib::{map::SanityMap, tile::RoomTile};
 use std::cmp::Ordering;
 
 #[derive(Default, SystemDesc)]
-pub struct SpawnSystem {
-    total_enemies: usize,
-}
+pub struct SpawnSystem {}
 
 impl<'a> System<'a> for SpawnSystem {
     type SystemData = (

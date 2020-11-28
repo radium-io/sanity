@@ -1,18 +1,13 @@
 use amethyst::{
     assets::{AssetStorage, Handle, Loader, ProgressCounter, RonFormat},
     core::{
-        math::{Point2, Point3, Vector3},
+        math::{Point2, Vector3},
         Named, Parent, Transform,
     },
     ecs::prelude::*,
     input::{is_close_requested, is_key_down},
     prelude::*,
-    renderer::{
-        camera::Camera,
-        debug_drawing::{DebugLines, DebugLinesComponent, DebugLinesParams},
-        palette::Srgba,
-        Transparent,
-    },
+    renderer::{camera::Camera, Transparent},
     tiles::TileMap,
     ui::UiCreator,
     window::ScreenDimensions,
@@ -20,8 +15,7 @@ use amethyst::{
 };
 use bracket_pathfinding::prelude::Point;
 use direction::Coord;
-use sanity_lib::tile::FloorTile;
-use sanity_lib::tile::RoomTile;
+use sanity_lib::tile::{FloorTile, RoomTile};
 
 #[derive(Default)]
 pub struct RoomState {
@@ -31,7 +25,6 @@ pub struct RoomState {
     height: u32,
     pairs: Option<Handle<sanity_lib::assets::Pairs>>,
     camera: Option<Entity>,
-    map: Option<Entity>,
 }
 
 impl RoomState {
@@ -100,7 +93,7 @@ impl RoomState {
             Some(spritesheet_handle.clone()),
         );
 
-        let mut t = Transform::default();
+        let t = Transform::default();
         world
             .create_entity()
             .with(floor)
@@ -114,7 +107,7 @@ impl RoomState {
             Some(spritesheet_handle),
         );
 
-        let mut t = Transform::default();
+        let t = Transform::default();
         world
             .create_entity()
             .with(walls)
@@ -144,7 +137,7 @@ impl RoomState {
         world.exec(
             |(entities, enemies): (Entities<'_>, ReadStorage<'_, crate::component::Enemy>)| {
                 // delete all the enemies so they respawn
-                for (entity, enemy) in (&entities, &enemies).join() {
+                for (entity, _enemy) in (&entities, &enemies).join() {
                     entities.delete(entity);
                 }
             },
@@ -224,7 +217,7 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Room
     }
 
     fn on_resume(&mut self, data: StateData<'_, CustomGameData<'a, 'b>>) {
-        let StateData { mut world, .. } = data;
+        let StateData { world, .. } = data;
 
         let mut restart = false;
         {
@@ -238,7 +231,7 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Room
         if restart {
             world.exec(
                 |(entities, players): (Entities<'_>, ReadStorage<'_, crate::component::Player>)| {
-                    for (entity, player) in (&entities, &players).join() {
+                    for (entity, _player) in (&entities, &players).join() {
                         entities.delete(entity); // also deletes camera child
                     }
                 },
@@ -265,7 +258,7 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Room
             self.map_generation += 1;
         }
 
-        let mut sanity_res = data.world.read_resource::<crate::state::Sanity>();
+        let sanity_res = data.world.read_resource::<crate::state::Sanity>();
         if sanity_res.game_over {
             println!("Game Over");
             return Trans::Push(Box::new(super::gameover::GameOverState));

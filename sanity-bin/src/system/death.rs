@@ -3,14 +3,12 @@ use amethyst::{
         get_animation_set, AnimationCommand, AnimationControlSet, AnimationSet, DeferStartRelation,
         EndControl,
     },
-    core::{math::Point3, Hidden, Transform},
     derive::SystemDesc,
     ecs::{
         prelude::{System, SystemData, WriteStorage},
         Entities, Entity, Join, ReadStorage,
     },
-    renderer::{palette, SpriteRender, Transparent},
-    tiles::{Map, MapStorage, TileMap},
+    renderer::SpriteRender,
 };
 
 #[derive(Default, SystemDesc)]

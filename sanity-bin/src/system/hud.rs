@@ -1,9 +1,7 @@
 use amethyst::{
-    core::timing::Time,
     derive::SystemDesc,
-    ecs::prelude::{Entities, Entity, Join, Read, ReadStorage, System, SystemData, WriteStorage},
-    ui::{UiFinder, UiText, UiTransform},
-    utils::fps_counter::FpsCounter,
+    ecs::prelude::{Entities, Join, ReadStorage, System, SystemData, WriteStorage},
+    ui::UiTransform,
 };
 
 #[derive(Default, SystemDesc)]
