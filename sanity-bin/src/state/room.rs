@@ -145,9 +145,7 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Room
         self.gen_map_exec(world);
         self.map_generation += 1;
 
-        // FIXME: move to global state?
         world.exec(|mut creator: UiCreator<'_>| {
-            creator.create("ui/fps.ron", ());
             creator.create("ui/hud.ron", ());
         });
     }

@@ -1,8 +1,12 @@
 use amethyst::{
     assets::{AssetStorage, Handle, Loader, Prefab, ProgressCounter, RonFormat},
     core::Named,
+    ecs::{Entities, Entity},
+    input::{is_close_requested, is_key_down},
     prelude::*,
     renderer::SpriteSheet,
+    ui::UiCreator,
+    winit,
 };
 
 use crate::{gamedata::CustomGameData, MyPrefabData};
@@ -15,6 +19,7 @@ pub struct LoadingState {
     player: Option<Handle<Prefab<MyPrefabData>>>,
     map: Option<Handle<SpriteSheet>>,
     pairs: Option<Handle<sanity_lib::assets::Pairs>>,
+    loading: Option<Entity>,
 }
 
 impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for LoadingState {
@@ -58,22 +63,35 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Load
         ));
 
         // load the tile pairs for this tileset
-        let loader = world.read_resource::<Loader>();
-        self.pairs = Some(loader.load(
-            "Dungeon_Tileset.pairs.ron",
-            RonFormat,
-            &mut self.progress_counter,
-            &world.read_resource::<AssetStorage<sanity_lib::assets::Pairs>>(),
-        ));
+        self.pairs = {
+            let loader = world.read_resource::<Loader>();
+            Some(loader.load(
+                "Dungeon_Tileset.pairs.ron",
+                RonFormat,
+                &mut self.progress_counter,
+                &world.read_resource::<AssetStorage<sanity_lib::assets::Pairs>>(),
+            ))
+        };
+
+        world.exec(|mut creator: UiCreator<'_>| {
+            creator.create("ui/fps.ron", ());
+            self.loading = Some(creator.create("ui/loading.ron", ()));
+        });
     }
 
     fn update(
         &mut self,
         data: StateData<'_, CustomGameData<'_, '_>>,
     ) -> Trans<CustomGameData<'a, 'b>, StateEvent> {
-        data.data.update(&data.world, false);
+        let StateData { mut world, .. } = data;
+
+        data.data.update(world, false);
 
         if self.progress_counter.is_complete() {
+            world.exec(|entities: Entities<'_>| {
+                entities.delete(self.loading.unwrap());
+            });
+
             Trans::Switch(Box::new(RoomState {
                 camera: None,
                 map_generation: 0,
@@ -83,6 +101,22 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Load
                 map_spritesheet: self.map.take().expect("Map Loaded"),
                 pairs: self.pairs.take().expect("Pairs Loaded"),
             }))
+        } else {
+            Trans::None
+        }
+    }
+
+    fn handle_event(
+        &mut self,
+        data: StateData<'_, CustomGameData<'a, 'b>>,
+        event: StateEvent,
+    ) -> Trans<CustomGameData<'a, 'b>, StateEvent> {
+        if let StateEvent::Window(event) = &event {
+            if is_close_requested(&event) || is_key_down(&event, winit::VirtualKeyCode::Escape) {
+                Trans::Quit
+            } else {
+                Trans::None
+            }
         } else {
             Trans::None
         }
