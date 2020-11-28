@@ -1,75 +1,47 @@
 #![enable(implicit_some)]
-/*!
-    @import /amethyst_assets/src/prefab/mod.rs#Prefab
-    @import ../../sanity-bin/src/main.rs#MyPrefabData
-    Prefab<MyPrefabData>
-*/
-
 Prefab(
     entities: [
         PrefabEntity(
-            data: MyPrefabData(
-                // SpriteScenePrefab
+            data: AnimatedSpritePrefab(
                 sprite_scene: (
-                    // SpriteSheetPrefab with index 0
                     sheet: Sheet(
-                        // TexturePrefab
-                        texture: File("sprites/Space Cadet.png", (
-                            "IMAGE", (
-                                sampler_info: (
-                                    min_filter: Nearest,
-                                    mag_filter: Nearest,
-                                    mip_filter: Nearest,
-                                    wrap_mode: (Tile, Tile, Tile),
-                                    lod_bias: (0),
-                                    lod_range: (
-                                        start: ( 0 ),
-                                        end: ( 8000 ),
+                        texture: File(
+                            "sprites/Space Cadet.png",
+                            (
+                                "IMAGE",
+                                (
+                                    sampler_info: (
+                                        min_filter: Nearest,
+                                        mag_filter: Nearest,
+                                        mip_filter: Nearest,
+                                        wrap_mode: (Tile, Tile, Tile),
+                                        lod_bias: (0),
+                                        lod_range: (start: (0), end: (8000)),
+                                        comparison: None,
+                                        border: (0),
+                                        normalized: true,
+                                        anisotropic: Off,
                                     ),
-                                    comparison: None,
-                                    border: (0),
-                                    normalized: true,
-                                    anisotropic: Off,
                                 ),
                             ),
-                        )),
-                        sprites: [
-                            // Grey bat sprites
-                            // Sprites with indexes from 0 to 5
-                            Grid((
-                                texture_width: 256,
-                                texture_height: 160,
-                                columns: 8,
-                                rows: 5,
-                            )),
-                        ],
-                        // optional
+                        ),
+                        sprites: [Grid((texture_width: 256, texture_height: 160, columns: 8, rows: 5))],
                         name: "cadet",
                     ),
-                    // SpriteRenderPrefab
-                    render: (
-                        sheet: "cadet",
-                        sprite_number: 0,
-                    ),
+                    render: (sheet: "cadet", sprite_number: 0),
                 ),
-                // AnimationSetPrefab
                 animation_set: (
                     animations: [
                         (
-                            // AnimationId
                             0,
                             (
                                 samplers: [
                                     (
                                         0,
-                                        // Only SpriteIndex channel allowed for SpriteRender in AnimationSetPrefab
                                         SpriteIndex,
                                         (
-                                            // Time of key frames
                                             input: [0.0, 0.2, 0.4, 0.6],
-                                            // Sprite indexes from SpriteSheet for key frames
                                             output: [0, 1, 2, 3],
-                                            // Sprites can only ever be animated with Step
                                             function: Step,
                                         ),
                                     ),
@@ -77,7 +49,6 @@ Prefab(
                             ),
                         ),
                         (
-                            // AnimationId
                             2,
                             (
                                 samplers: [
@@ -93,8 +64,7 @@ Prefab(
                                 ],
                             ),
                         ),
-                                                (
-                            // AnimationId
+                        (
                             1,
                             (
                                 samplers: [
@@ -110,7 +80,6 @@ Prefab(
                                 ],
                             ),
                         ),
-
                     ],
                 ),
             ),

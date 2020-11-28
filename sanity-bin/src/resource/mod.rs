@@ -30,8 +30,8 @@ pub fn load_anim_prefab(
     world: &mut World,
     prefab_path: &str,
     prog: &mut ProgressCounter,
-) -> Handle<Prefab<crate::MyPrefabData>> {
-    world.exec(|loader: PrefabLoader<'_, crate::MyPrefabData>| {
+) -> Handle<Prefab<crate::AnimatedSpritePrefab>> {
+    world.exec(|loader: PrefabLoader<'_, crate::AnimatedSpritePrefab>| {
         loader.load(prefab_path, RonFormat, prog)
     })
 }
@@ -41,7 +41,7 @@ pub trait Sprited {
 }
 
 pub trait Animated {
-    fn new_animated_sprite(&self) -> Handle<Prefab<crate::MyPrefabData>>;
+    fn new_animated_sprite(&self) -> Handle<Prefab<crate::AnimatedSpritePrefab>>;
 }
 
 pub struct Bullets {
@@ -55,11 +55,11 @@ impl Sprited for Bullets {
 }
 
 pub struct Enemies {
-    pub anims: Handle<Prefab<crate::MyPrefabData>>,
+    pub anims: Handle<Prefab<crate::AnimatedSpritePrefab>>,
 }
 
 impl Animated for Enemies {
-    fn new_animated_sprite(&self) -> Handle<Prefab<crate::MyPrefabData>> {
+    fn new_animated_sprite(&self) -> Handle<Prefab<crate::AnimatedSpritePrefab>> {
         self.anims.clone()
     }
 }

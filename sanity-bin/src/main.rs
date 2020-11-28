@@ -38,7 +38,7 @@ mod system;
 
 /// Loading data for one entity
 #[derive(Debug, Clone, Deserialize, PrefabData)]
-pub struct MyPrefabData {
+pub struct AnimatedSpritePrefab {
     /// Information for rendering a scene with sprites
     sprite_scene: SpriteScenePrefab,
     /// Аll animations that can be run on the entity
@@ -66,7 +66,7 @@ fn main() -> Result<()> {
 
     let game_data = gamedata::CustomGameDataBuilder::default()
         .with_base(
-            PrefabLoaderSystemDesc::<MyPrefabData>::default(),
+            PrefabLoaderSystemDesc::<AnimatedSpritePrefab>::default(),
             "scene_loader",
             &[],
         )

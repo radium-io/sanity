@@ -9,14 +9,14 @@ use amethyst::{
     winit,
 };
 
-use crate::{gamedata::CustomGameData, MyPrefabData};
+use crate::{gamedata::CustomGameData, AnimatedSpritePrefab};
 
 use super::RoomState;
 
 #[derive(Default)]
 pub struct LoadingState {
     progress_counter: ProgressCounter,
-    player: Option<Handle<Prefab<MyPrefabData>>>,
+    player: Option<Handle<Prefab<AnimatedSpritePrefab>>>,
     map: Option<Handle<SpriteSheet>>,
     pairs: Option<Handle<sanity_lib::assets::Pairs>>,
     loading: Option<Entity>,

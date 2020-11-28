@@ -1,4 +1,4 @@
-use crate::{gamedata::CustomGameData, MyPrefabData};
+use crate::{gamedata::CustomGameData, AnimatedSpritePrefab};
 use amethyst::{
     assets::{AssetStorage, Handle, Loader, Prefab, ProgressCounter, RonFormat},
     core::{
@@ -23,7 +23,7 @@ pub struct RoomState {
     pub height: u32,
     pub pairs: Handle<sanity_lib::assets::Pairs>,
     pub camera: Option<Entity>,
-    pub player: Handle<Prefab<MyPrefabData>>,
+    pub player: Handle<Prefab<AnimatedSpritePrefab>>,
     pub map_spritesheet: Handle<SpriteSheet>,
 }
 

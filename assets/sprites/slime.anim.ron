@@ -2,7 +2,7 @@
 Prefab(
     entities: [
         PrefabEntity(
-            data: MyPrefabData(
+            data: AnimatedSpritePrefab(
                 sprite_scene: (
                     sheet: Sheet(
                         texture: File(
