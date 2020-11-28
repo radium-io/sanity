@@ -16,15 +16,15 @@ impl<'a> System<'a> for HUDSystem {
     );
 
     fn run(&mut self, (entities, mut ui_transform, players, healths): Self::SystemData) {
-        let health_entity = (&entities, &ui_transform)
+        if let Some(health_entity) = (&entities, &ui_transform)
             .join()
             .find(|x| x.1.id == "health")
             .map(|x| x.0)
-            .unwrap();
-
-        if let Some(health_display) = ui_transform.get_mut(health_entity) {
-            for (player, health) in (&players, &healths).join() {
-                health_display.width = health.current as f32 / health.max as f32 * 0.8;
+        {
+            if let Some(health_display) = ui_transform.get_mut(health_entity) {
+                for (player, health) in (&players, &healths).join() {
+                    health_display.width = health.current as f32 / health.max as f32 * 0.8;
+                }
             }
         }
     }

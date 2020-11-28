@@ -1,6 +1,6 @@
-use crate::gamedata::CustomGameData;
+use crate::{gamedata::CustomGameData, MyPrefabData};
 use amethyst::{
-    assets::{AssetStorage, Handle, Loader, ProgressCounter, RonFormat},
+    assets::{AssetStorage, Handle, Loader, Prefab, ProgressCounter, RonFormat},
     core::{
         math::{Point2, Vector3},
         Named, Parent, Transform,
@@ -8,7 +8,7 @@ use amethyst::{
     ecs::prelude::*,
     input::{is_close_requested, is_key_down},
     prelude::*,
-    renderer::{camera::Camera, Transparent},
+    renderer::{camera::Camera, SpriteSheet, Transparent},
     tiles::TileMap,
     ui::UiCreator,
     window::ScreenDimensions,
@@ -17,66 +17,18 @@ use amethyst::{
 use bracket_pathfinding::prelude::Point;
 use sanity_lib::tile::{FloorTile, RoomTile};
 
-#[derive(Default)]
 pub struct RoomState {
-    progress_counter: ProgressCounter,
-    map_generation: usize,
-    width: u32,
-    height: u32,
-    pairs: Option<Handle<sanity_lib::assets::Pairs>>,
-    camera: Option<Entity>,
-}
-
-impl RoomState {
-    pub fn new(width: u32, height: u32) -> Self {
-        Self {
-            width,
-            height,
-            ..Default::default()
-        }
-    }
-}
-
-fn init_player(world: &mut World, pos: Point, prog: &mut ProgressCounter) -> Entity {
-    let prefab = crate::resource::load_anim_prefab(world, "sprites/Space Cadet.anim.ron", prog);
-
-    let weapon = world
-        .create_entity()
-        .with(crate::component::Weapon {
-            damage_range: (3, 8),
-            ranged: true,
-        })
-        .named("Blaster")
-        .build();
-
-    let mut t = Transform::default();
-    t.move_up(8.);
-
-    world
-        .create_entity()
-        .with(Transparent)
-        .with(crate::component::Player {
-            weapon: Some(weapon),
-        })
-        .with(crate::component::Health {
-            max: 30,
-            current: 30,
-        })
-        .with(crate::component::Position { pos })
-        .with(prefab)
-        .with(t)
-        .build()
+    pub map_generation: usize,
+    pub width: u32,
+    pub height: u32,
+    pub pairs: Handle<sanity_lib::assets::Pairs>,
+    pub camera: Option<Entity>,
+    pub player: Handle<Prefab<MyPrefabData>>,
+    pub map_spritesheet: Handle<SpriteSheet>,
 }
 
 impl RoomState {
     fn init_map(&mut self, world: &mut World) {
-        let spritesheet_handle = crate::resource::load_sprite_sheet(
-            &world,
-            "Dungeon_Tileset.png",
-            "Dungeon_Tileset.ron",
-            &mut self.progress_counter,
-        );
-
         let map_size = Vector3::new(self.width, self.height, 1);
         let tile_size = Vector3::new(32, 32, 1);
 
@@ -85,7 +37,7 @@ impl RoomState {
             .with(TileMap::<FloorTile>::new(
                 map_size,
                 tile_size,
-                Some(spritesheet_handle.clone()),
+                Some(self.map_spritesheet.clone()),
             ))
             .build();
 
@@ -94,18 +46,9 @@ impl RoomState {
             .with(TileMap::<RoomTile>::new(
                 map_size,
                 tile_size,
-                Some(spritesheet_handle),
+                Some(self.map_spritesheet.clone()),
             ))
             .build();
-
-        // load the tile pairs for this tileset
-        let loader = world.read_resource::<Loader>();
-        self.pairs = Some(loader.load(
-            "Dungeon_Tileset.pairs.ron",
-            RonFormat,
-            &mut self.progress_counter,
-            &world.read_resource::<AssetStorage<sanity_lib::assets::Pairs>>(),
-        ));
     }
 
     fn init_camera(&mut self, world: &mut World, player: Entity) {
@@ -121,6 +64,35 @@ impl RoomState {
                 .with(Parent { entity: player })
                 .build(),
         );
+    }
+
+    fn init_player(&self, world: &mut World, pos: Point) -> Entity {
+        let weapon = world
+            .create_entity()
+            .with(crate::component::Weapon {
+                damage_range: (3, 8),
+                ranged: true,
+            })
+            .named("Blaster")
+            .build();
+
+        let mut t = Transform::default();
+        t.move_up(8.);
+
+        world
+            .create_entity()
+            .with(Transparent)
+            .with(crate::component::Player {
+                weapon: Some(weapon),
+            })
+            .with(crate::component::Health {
+                max: 30,
+                current: 30,
+            })
+            .with(crate::component::Position { pos })
+            .with(self.player.clone())
+            .with(t)
+            .build()
     }
 
     fn gen_map_exec(&self, world: &mut World) {
@@ -147,11 +119,10 @@ impl RoomState {
                             if pos.xy() < Point2::new(self.width - 3, self.height - 3)
                                 && pos.xy() > Point2::new(2, 2)
                             {
-                                let pairs = &self.pairs.as_ref().unwrap().clone();
                                 crate::map::gen_map(
                                     walls,
                                     floor,
-                                    assets.get(&pairs).unwrap(),
+                                    assets.get(&self.pairs.clone()).unwrap(),
                                     pos.coord(),
                                 );
                             }
@@ -167,36 +138,12 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Room
     fn on_start(&mut self, data: StateData<'_, CustomGameData<'a, 'b>>) {
         let StateData { mut world, .. } = data;
 
-        // register components, may be able to remove if used by system
-        world.register::<Named>();
-        world.register::<Handle<sanity_lib::assets::Pairs>>();
-
-        // insert resources in to world
-        world.insert(crate::resource::Bullets {
-            sheet: crate::resource::load_sprite_sheet(
-                &world,
-                "sprites/bullets.png",
-                "sprites/bullets.ron",
-                &mut self.progress_counter,
-            ),
-        });
-
-        let anims = crate::resource::load_anim_prefab(
-            &mut world,
-            "sprites/slime.anim.ron",
-            &mut self.progress_counter,
-        );
-        world.insert(crate::resource::Enemies { anims });
-
-        world.insert(crate::state::Sanity::default());
-
-        let player = init_player(
-            world,
-            Point::new(self.width / 2, self.height / 2),
-            &mut self.progress_counter,
-        );
+        let player = self.init_player(world, Point::new(self.width / 2, self.height / 2));
         self.init_camera(world, player);
         self.init_map(world);
+
+        self.gen_map_exec(world);
+        self.map_generation += 1;
 
         // FIXME: move to global state?
         world.exec(|mut creator: UiCreator<'_>| {
@@ -225,11 +172,7 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Room
                     }
                 },
             );
-            let player = init_player(
-                world,
-                Point::new(self.width / 2, self.height / 2),
-                &mut self.progress_counter,
-            );
+            let player = self.init_player(world, Point::new(self.width / 2, self.height / 2));
             self.init_camera(world, player);
             self.gen_map_exec(world);
             self.map_generation += 1;
@@ -241,11 +184,6 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Room
         data: StateData<'_, CustomGameData<'_, '_>>,
     ) -> Trans<CustomGameData<'a, 'b>, StateEvent> {
         data.data.update(&data.world, true);
-
-        if self.progress_counter.is_complete() && self.map_generation < 1 {
-            self.gen_map_exec(data.world);
-            self.map_generation += 1;
-        }
 
         let sanity_res = data.world.read_resource::<crate::state::Sanity>();
         if sanity_res.game_over {

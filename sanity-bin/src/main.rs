@@ -146,7 +146,7 @@ fn main() -> Result<()> {
 
     let mut game = Application::build(
         app_root.parent().unwrap().join("assets"),
-        state::room::RoomState::new(48, 32),
+        state::LoadingState::default(),
     )?
     .with_frame_limit(FrameRateLimitStrategy::Yield, 101)
     .build(game_data)?;
