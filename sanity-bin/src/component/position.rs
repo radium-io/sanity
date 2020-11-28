@@ -1,6 +1,9 @@
-use amethyst::core::math::{Point2, Point3};
-use amethyst::ecs::{Component, DenseVecStorage};
+use amethyst::{
+    core::math::{Point2, Point3},
+    ecs::{Component, DenseVecStorage},
+};
 use bracket_pathfinding::prelude::Point;
+use direction::Coord;
 use std::ops::Add;
 
 #[derive(Clone)]
@@ -18,6 +21,10 @@ impl Position {
 
     pub fn xyz(&self) -> Point3<u32> {
         Point3::new(self.pos.x as u32, self.pos.y as u32, 0)
+    }
+
+    pub fn coord(&self) -> Coord {
+        direction::Coord::new(self.pos.x as i32, self.pos.y as i32)
     }
 }
 impl Add<direction::CardinalDirection> for Position {

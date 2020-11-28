@@ -1,3 +1,4 @@
+use crate::gamedata::CustomGameData;
 use amethyst::{
     assets::{AssetStorage, Handle, Loader, ProgressCounter, RonFormat},
     core::{
@@ -14,7 +15,6 @@ use amethyst::{
     winit,
 };
 use bracket_pathfinding::prelude::Point;
-use direction::Coord;
 use sanity_lib::tile::{FloorTile, RoomTile};
 
 #[derive(Default)]
@@ -37,11 +37,9 @@ impl RoomState {
     }
 }
 
-// FIXME: allow other character sprites
-fn init_player(world: &mut World, start: Point, prog: &mut ProgressCounter) -> Entity {
-    let mut t = Transform::default();
-    t.move_up(8.);
+fn init_player(world: &mut World, pos: Point, prog: &mut ProgressCounter) -> Entity {
     let prefab = crate::resource::load_anim_prefab(world, "sprites/Space Cadet.anim.ron", prog);
+
     let weapon = world
         .create_entity()
         .with(crate::component::Weapon {
@@ -50,6 +48,10 @@ fn init_player(world: &mut World, start: Point, prog: &mut ProgressCounter) -> E
         })
         .named("Blaster")
         .build();
+
+    let mut t = Transform::default();
+    t.move_up(8.);
+
     world
         .create_entity()
         .with(Transparent)
@@ -60,14 +62,13 @@ fn init_player(world: &mut World, start: Point, prog: &mut ProgressCounter) -> E
             max: 30,
             current: 30,
         })
-        .with(crate::component::Position { pos: start })
+        .with(crate::component::Position { pos })
         .with(prefab)
         .with(t)
         .build()
 }
 
 impl RoomState {
-    // FIXME: allow other tilesets
     fn init_map(&mut self, world: &mut World) {
         let spritesheet_handle = crate::resource::load_sprite_sheet(
             &world,
@@ -76,46 +77,35 @@ impl RoomState {
             &mut self.progress_counter,
         );
 
+        let map_size = Vector3::new(self.width, self.height, 1);
+        let tile_size = Vector3::new(32, 32, 1);
+
+        world
+            .create_entity()
+            .with(TileMap::<FloorTile>::new(
+                map_size,
+                tile_size,
+                Some(spritesheet_handle.clone()),
+            ))
+            .build();
+
+        world
+            .create_entity()
+            .with(TileMap::<RoomTile>::new(
+                map_size,
+                tile_size,
+                Some(spritesheet_handle),
+            ))
+            .build();
+
         // load the tile pairs for this tileset
-        let pairs = {
-            let loader = world.read_resource::<Loader>();
-            loader.load(
-                "Dungeon_Tileset.pairs.ron",
-                RonFormat,
-                &mut self.progress_counter,
-                &world.read_resource::<AssetStorage<sanity_lib::assets::Pairs>>(),
-            )
-        };
-
-        let floor = TileMap::<FloorTile>::new(
-            Vector3::new(self.width, self.height, 1), // The dimensions of the map
-            Vector3::new(32, 32, 1),                  // The dimensions of each tile
-            Some(spritesheet_handle.clone()),
-        );
-
-        let t = Transform::default();
-        world
-            .create_entity()
-            .with(floor)
-            .with(t)
-            .named("floor")
-            .build();
-
-        let walls = TileMap::<RoomTile>::new(
-            Vector3::new(self.width, self.height, 1), // The dimensions of the map
-            Vector3::new(32, 32, 1),                  // The dimensions of each tile
-            Some(spritesheet_handle),
-        );
-
-        let t = Transform::default();
-        world
-            .create_entity()
-            .with(walls)
-            .with(t)
-            .named("walls")
-            .build();
-
-        self.pairs = Some(pairs);
+        let loader = world.read_resource::<Loader>();
+        self.pairs = Some(loader.load(
+            "Dungeon_Tileset.pairs.ron",
+            RonFormat,
+            &mut self.progress_counter,
+            &world.read_resource::<AssetStorage<sanity_lib::assets::Pairs>>(),
+        ));
     }
 
     fn init_camera(&mut self, world: &mut World, player: Entity) {
@@ -134,9 +124,9 @@ impl RoomState {
     }
 
     fn gen_map_exec(&self, world: &mut World) {
+        // delete all the enemies so they respawn
         world.exec(
             |(entities, enemies): (Entities<'_>, ReadStorage<'_, crate::component::Enemy>)| {
-                // delete all the enemies so they respawn
                 for (entity, _enemy) in (&entities, &enemies).join() {
                     entities.delete(entity);
                 }
@@ -162,7 +152,7 @@ impl RoomState {
                                     walls,
                                     floor,
                                     assets.get(&pairs).unwrap(),
-                                    Coord::new(pos.pos.x as i32, pos.pos.y as i32),
+                                    pos.coord(),
                                 );
                             }
                         }
@@ -172,7 +162,6 @@ impl RoomState {
         );
     }
 }
-use crate::gamedata::CustomGameData;
 
 impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for RoomState {
     fn on_start(&mut self, data: StateData<'_, CustomGameData<'a, 'b>>) {
