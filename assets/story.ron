@@ -1,0 +1,91 @@
+#![enable(implicit_some)]
+/*!
+    @import /amethyst_assets/src/prefab/mod.rs#Prefab
+    @import ../../animation/main.rs#MyPrefabData
+    Prefab<MyPrefabData>
+*/
+
+Prefab (
+    entities: [
+        (
+            data: (
+                (
+                    transform: (),
+                    light: (
+                        ambient_color: ((0.05, 0.05, 0.05, 1.0)),
+                    )
+                ),
+                (
+                    animations: [
+                        (Translate, (
+                            samplers: [(0, Translation, (
+                                input: [0., 10., 20., 25., 30., 35.],
+                                output: [
+                                    Vec3((0., 0., 0.)),
+                                    Vec3((0., 0., -10.)),
+                                    Vec3((0., 0., -13.)),
+                                    Vec3((0., 0., -14.)),
+                                    Vec3((0., 0., -15.)),
+                                    Vec3((0., 0., -16.)),
+                                ],
+                                function: Linear,
+                            ))]
+                        )),
+                    ],
+                )
+            ),
+        ),
+        (
+            parent: 0,
+            data: (
+                (
+                    graphics: (
+                        mesh: Shape(( shape: Sphere(64, 64), )),
+                        material: (
+                            albedo: Generate(Srgba(0.5, 0.5, 0.52, 1.0,)),
+                        ),
+                    ),
+                    transform: (
+                        translation: (0., 0., 2.0),
+                    ),
+                ),
+                None
+            ),
+        ),
+        (
+            data: (
+                (
+                    transform: (
+                        translation: (20.0, 20.0, -20.0),
+                    ),
+                    light: (
+                        light: Point((
+                            intensity: 3.0,
+                            color: (1.0, 1.0, 1.0),
+                            radius: 5.0,
+                        )),
+                    ),
+                ),
+                None
+            ),
+        ),
+        (
+            data: (
+                (
+                    transform: Transform (
+                        translation: (0.0, 0.0, -15.0),
+                        rotation: (0.0, 1.0, 0.0, 0.0),
+                        scale: (1.0, -1.0, 1.0),
+                    ),
+                    camera: Perspective(
+                        aspect: 1.77,
+                        fovy: 1.,
+                        znear: 0.1,
+                        zfar: 2000.0,
+                    ),
+                ),
+                None
+            ),
+        ),
+    ],
+)

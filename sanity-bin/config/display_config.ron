@@ -1,4 +1,5 @@
 (
   title: "Amethyst Starter 2D template",
   dimensions: Some((1920, 1080)),
+  multisampling: 8,
 )

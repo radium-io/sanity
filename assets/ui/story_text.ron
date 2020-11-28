@@ -1,0 +1,20 @@
+#![enable(implicit_some)]
+Label(
+    transform: (
+        id: "story_text",
+        anchor: BottomLeft,
+        pivot: BottomLeft,
+        x: 0.,
+        y: 0.,
+        width: 320,
+        height: 256,
+    ),
+    text: (
+        text: "system initialization complete...",
+        align: BottomLeft,
+        font_size: 16.,
+        color: (1., 1., 1., 1.),
+        font: File("fonts/Px437_Robotron_A7100.ttf", ("TTF", ())),
+        line_mode: Wrap
+    ),
+)

@@ -4,7 +4,7 @@ use amethyst::{
         Handle, HotReloadBundle, HotReloadStrategy, PrefabData, PrefabLoaderSystemDesc, Processor,
         ProgressCounter,
     },
-    core::{frame_limiter::FrameRateLimitStrategy, transform::TransformBundle, Hidden},
+    core::{frame_limiter::FrameRateLimitStrategy, transform::TransformBundle, Hidden, Transform},
     derive::PrefabData,
     ecs::{prelude::*, ReadStorage, SystemData, World},
     input::{InputBundle, StringBindings},
@@ -15,7 +15,8 @@ use amethyst::{
         plugins::{RenderFlat2D, RenderToWindow},
         sprite::{prefab::SpriteScenePrefab, SpriteRender},
         types::DefaultBackend,
-        Backend, Factory, RenderGroupDesc, RenderPlugin, RenderingBundle, SpriteSheet, Texture,
+        Backend, Factory, RenderGroupDesc, RenderPbr3D, RenderPlugin, RenderingBundle, SpriteSheet,
+        Texture,
     },
     shred::DispatcherBuilder,
     tiles::{
@@ -28,6 +29,8 @@ use amethyst::{
 };
 use serde::Deserialize;
 use std::{fmt::Debug, marker::PhantomData};
+
+use crate::state::intro::AnimationId;
 
 mod component;
 mod gamedata;
@@ -70,13 +73,22 @@ fn main() -> Result<()> {
             "scene_loader",
             &[],
         )
+        .with_base(
+            PrefabLoaderSystemDesc::<crate::state::intro::StoryPrefab>::default(),
+            "intro_loader",
+            &[],
+        )
         //.with_base(CameraOrthoSystem::default(), "ortho_camera_system", &[])
         .with_base_bundle(HotReloadBundle::new(HotReloadStrategy::every(2)))
         .with_base_bundle(AnimationBundle::<usize, SpriteRender>::new(
             "sprite_animation_control",
             "sprite_sampler_interpolation",
         ))
-        .with_base_bundle(TransformBundle::new())
+        .with_base_bundle(AnimationBundle::<AnimationId, Transform>::new(
+            "animation_control_system",
+            "sampler_interpolation_system",
+        ))
+        .with_base_bundle(TransformBundle::new().with_dep(&["sampler_interpolation_system"]))
         .with_base_bundle(
             InputBundle::<StringBindings>::new()
                 .with_bindings_from_file(&app_root.join("config/input.ron"))?,
@@ -86,7 +98,7 @@ fn main() -> Result<()> {
         .with_base(system::fps::FPSSystem::default(), "fps_system", &[])
         .with_base(
             system::visibility::VisibilitySystem::default(),
-            "visibility_system",
+            "vis_system",
             &[],
         )
         .with_running(
@@ -140,16 +152,17 @@ fn main() -> Result<()> {
                 )
                 .with_plugin(RenderUi::default())
                 .with_plugin(RenderFlat2D::default())
+                .with_plugin(RenderPbr3D::default())
                 .with_plugin(RenderTiles2D::<sanity_lib::tile::FloorTile>::default())
                 .with_plugin(RenderTiles2DTransparent::<sanity_lib::tile::RoomTile>::default()),
         );
 
-    let mut game = Application::build(
-        app_root.parent().unwrap().join("assets"),
-        state::LoadingState::default(),
-    )?
-    .with_frame_limit(FrameRateLimitStrategy::Yield, 101)
-    .build(game_data)?;
+    let first_state = state::LoadingState::default();
+    // let first_state = state::IntroState::default();
+
+    let mut game = Application::build(app_root.parent().unwrap().join("assets"), first_state)?
+        .with_frame_limit(FrameRateLimitStrategy::Yield, 101)
+        .build(game_data)?;
 
     game.run();
 
