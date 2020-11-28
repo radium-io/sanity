@@ -129,6 +129,9 @@ pub fn gen_map(
                 cell.chosen_pattern_id()
                     .expect(&format!("Chosen tile for coord {:?}.", cell)) as usize,
             );
+            tile.visited = false;
+            tile.visible = false;
+            tile.tint = None;
             tile.sprite = s;
             tile.walkable = pairs.walkable.contains(&s.unwrap());
         }
@@ -159,6 +162,9 @@ pub fn gen_map(
             }
 
             if let Some(floor_tile) = floor.get_mut(&Point3::new(x, y, 0)) {
+                floor_tile.visited = false;
+                floor_tile.visible = false;
+                floor_tile.tint = None;
                 floor_tile.sprite = Some(88);
             }
         }

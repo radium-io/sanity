@@ -30,6 +30,8 @@ pub struct RoomState {
     width: u32,
     height: u32,
     pairs: Option<Handle<sanity_lib::assets::Pairs>>,
+    camera: Option<Entity>,
+    map: Option<Entity>,
 }
 
 impl RoomState {
@@ -40,20 +42,6 @@ impl RoomState {
             ..Default::default()
         }
     }
-}
-
-fn init_camera(world: &mut World, player: Entity) {
-    let (width, height) = {
-        let dim = world.read_resource::<ScreenDimensions>();
-        (dim.width(), dim.height())
-    };
-
-    world
-        .create_entity()
-        .with(Camera::standard_2d(width / 2., height / 2.))
-        .with(Transform::from(Vector3::new(0., 0., 100.)))
-        .with(Parent { entity: player })
-        .build();
 }
 
 // FIXME: allow other character sprites
@@ -137,7 +125,31 @@ impl RoomState {
         self.pairs = Some(pairs);
     }
 
+    fn init_camera(&mut self, world: &mut World, player: Entity) {
+        let (width, height) = {
+            let dim = world.read_resource::<ScreenDimensions>();
+            (dim.width(), dim.height())
+        };
+        self.camera = Some(
+            world
+                .create_entity()
+                .with(Camera::standard_2d(width / 2., height / 2.))
+                .with(Transform::from(Vector3::new(0., 0., 100.)))
+                .with(Parent { entity: player })
+                .build(),
+        );
+    }
+
     fn gen_map_exec(&self, world: &mut World) {
+        world.exec(
+            |(entities, enemies): (Entities<'_>, ReadStorage<'_, crate::component::Enemy>)| {
+                // delete all the enemies so they respawn
+                for (entity, enemy) in (&entities, &enemies).join() {
+                    entities.delete(entity);
+                }
+            },
+        );
+
         world.exec(
             |(mut wall_maps, mut floor_maps, assets, players, positions): (
                 WriteStorage<'_, TileMap<RoomTile>>,
@@ -201,7 +213,7 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Room
             Point::new(self.width / 2, self.height / 2),
             &mut self.progress_counter,
         );
-        init_camera(world, player);
+        self.init_camera(world, player);
         self.init_map(world);
 
         // FIXME: move to global state?
@@ -209,6 +221,37 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Room
             creator.create("ui/fps.ron", ());
             creator.create("ui/hud.ron", ());
         });
+    }
+
+    fn on_resume(&mut self, data: StateData<'_, CustomGameData<'a, 'b>>) {
+        let StateData { mut world, .. } = data;
+
+        let mut restart = false;
+        {
+            let mut sanity_res = world.write_resource::<crate::state::Sanity>();
+            if sanity_res.game_over {
+                sanity_res.game_over = false;
+                restart = true;
+            }
+        }
+
+        if restart {
+            world.exec(
+                |(entities, players): (Entities<'_>, ReadStorage<'_, crate::component::Player>)| {
+                    for (entity, player) in (&entities, &players).join() {
+                        entities.delete(entity); // also deletes camera child
+                    }
+                },
+            );
+            let player = init_player(
+                world,
+                Point::new(self.width / 2, self.height / 2),
+                &mut self.progress_counter,
+            );
+            self.init_camera(world, player);
+            self.gen_map_exec(world);
+            self.map_generation += 1;
+        }
     }
 
     fn update(
@@ -225,7 +268,7 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Room
         let mut sanity_res = data.world.read_resource::<crate::state::Sanity>();
         if sanity_res.game_over {
             println!("Game Over");
-            return Trans::Switch(Box::new(super::gameover::GameOverState));
+            return Trans::Push(Box::new(super::gameover::GameOverState));
         }
         Trans::None
     }

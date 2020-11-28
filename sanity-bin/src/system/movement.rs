@@ -57,8 +57,9 @@ impl<'a> System<'a> for MovementSystem {
             let enemy_positions: Vec<_> =
                 (&entities, &positions, &enemies, &healths).join().collect();
 
-            // player walked in to enemy
             let mut intents_to_cancel: Vec<Entity> = vec![];
+
+            // Player wants to move.
             for (entity, position, intent, _) in
                 (&entities, &positions, &mut intents, &players).join()
             {
@@ -66,9 +67,11 @@ impl<'a> System<'a> for MovementSystem {
                 let p = Point::new(c.x, c.y);
                 let target = position.pos + p;
 
+                // Enemy is in place that player want's to move.  Melee attack.
                 if let Some(enemy) = enemy_positions.iter().find(|x| x.1.pos == target) {
                     // there's an enemy on this position
-                    intents_to_cancel.push(entity);
+                    intents_to_cancel.push(entity); // player doesn't move in to enemy
+                    intents_to_cancel.push(enemy.0); // enemy doesn't move away or attack twice TODO: enemy may flee?
                     collisions.insert(
                         entity,
                         crate::component::Collision {
@@ -86,6 +89,7 @@ impl<'a> System<'a> for MovementSystem {
                 }
             }
 
+            // Enemy movement.
             for (player_ent, player, player_pos, _) in
                 (&entities, &players, &positions, &healths).join()
             {
@@ -167,7 +171,9 @@ impl<'a> System<'a> for MovementSystem {
                             // note: world coords are inverted from grid coords on y
                         );
 
-                        intent.step -= 1;
+                        if intent.step > 0 {
+                            intent.step -= 1;
+                        }
 
                         if intent.step == 0 {
                             position.pos = target;

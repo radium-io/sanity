@@ -110,11 +110,7 @@ fn main() -> Result<()> {
             "collision_system",
             &["movement_system"],
         )
-        .with_base(
-            system::spawn::SpawnSystem::default(),
-            "spawn_system",
-            &["collision_system"],
-        )
+        .with_running(system::spawn::SpawnSystem::default(), "spawn_system", &[])
         .with_base(
             system::hud::HUDSystem::default(),
             "hud_system",

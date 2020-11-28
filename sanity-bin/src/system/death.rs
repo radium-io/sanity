@@ -1,6 +1,7 @@
 use amethyst::{
     animation::{
-        get_animation_set, AnimationCommand, AnimationControlSet, AnimationSet, EndControl,
+        get_animation_set, AnimationCommand, AnimationControlSet, AnimationSet, DeferStartRelation,
+        EndControl,
     },
     core::{math::Point3, Hidden, Transform},
     derive::SystemDesc,
@@ -30,14 +31,15 @@ impl<'a> System<'a> for DeathSystem {
             if health.current <= 0 {
                 let control_set = get_animation_set(&mut control_sets, entity).unwrap();
                 control_set.abort(0);
-                control_set.abort(2);
                 control_set.abort(3);
-                control_set.add_animation(
+                control_set.add_deferred_animation(
                     1,
                     &animation_set.get(&1).unwrap(),
                     EndControl::Stay,
                     4.0,
                     AnimationCommand::Start,
+                    2,
+                    DeferStartRelation::Start(1.),
                 );
 
                 killed.push(entity);

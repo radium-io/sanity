@@ -42,6 +42,8 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Game
         if let StateEvent::Window(event) = &event {
             if is_close_requested(&event) || is_key_down(&event, winit::VirtualKeyCode::Escape) {
                 Trans::Quit
+            } else if is_key_down(&event, winit::VirtualKeyCode::R) {
+                Trans::Pop
             } else {
                 Trans::None
             }
