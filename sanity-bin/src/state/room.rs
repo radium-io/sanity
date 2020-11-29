@@ -1,4 +1,4 @@
-use crate::{gamedata::CustomGameData, AnimatedSpritePrefab};
+use crate::{gamedata::CustomGameData, resource::Sprited, AnimatedSpritePrefab};
 use amethyst::{
     assets::{AssetStorage, Handle, Loader, Prefab, ProgressCounter, RonFormat},
     core::{
@@ -9,7 +9,7 @@ use amethyst::{
     input::{is_close_requested, is_key_down},
     prelude::*,
     renderer::{camera::Camera, SpriteSheet, Transparent},
-    tiles::TileMap,
+    tiles::{Map, TileMap},
     ui::UiCreator,
     window::ScreenDimensions,
     winit,
@@ -23,6 +23,7 @@ pub struct RoomState {
     pub height: u32,
     pub pairs: Handle<sanity_lib::assets::Pairs>,
     pub camera: Option<Entity>,
+    pub walls: Option<Entity>,
     pub player: Handle<Prefab<AnimatedSpritePrefab>>,
     pub map_spritesheet: Handle<SpriteSheet>,
 }
@@ -41,14 +42,16 @@ impl RoomState {
             ))
             .build();
 
-        world
-            .create_entity()
-            .with(TileMap::<RoomTile>::new(
-                map_size,
-                tile_size,
-                Some(self.map_spritesheet.clone()),
-            ))
-            .build();
+        self.walls = Some(
+            world
+                .create_entity()
+                .with(TileMap::<RoomTile>::new(
+                    map_size,
+                    tile_size,
+                    Some(self.map_spritesheet.clone()),
+                ))
+                .build(),
+        );
     }
 
     fn init_camera(&mut self, world: &mut World, player: Entity) {
@@ -84,6 +87,7 @@ impl RoomState {
             .with(Transparent)
             .with(crate::component::Player {
                 weapon: Some(weapon),
+                inventory: vec![],
             })
             .with(crate::component::Health {
                 max: 30,
@@ -170,6 +174,7 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Room
                     }
                 },
             );
+            world.maintain();
             let player = self.init_player(world, Point::new(self.width / 2, self.height / 2));
             self.init_camera(world, player);
             self.gen_map_exec(world);

@@ -36,8 +36,8 @@ pub fn load_anim_prefab(
     })
 }
 
-pub trait Sprited {
-    fn new_sprite(&self) -> SpriteRender;
+pub trait Sprited<T> {
+    fn new_sprite(&self, idx: T) -> SpriteRender;
 }
 
 pub trait Animated {
@@ -48,9 +48,19 @@ pub struct Bullets {
     pub sheet: Handle<SpriteSheet>,
 }
 
-impl Sprited for Bullets {
-    fn new_sprite(&self) -> SpriteRender {
+impl Sprited<()> for Bullets {
+    fn new_sprite(&self, _: ()) -> SpriteRender {
         SpriteRender::new(self.sheet.clone(), 0)
+    }
+}
+
+pub struct Items {
+    pub sheet: Handle<SpriteSheet>,
+}
+
+impl Sprited<crate::component::item::ItemType> for Items {
+    fn new_sprite(&self, index: crate::component::item::ItemType) -> SpriteRender {
+        SpriteRender::new(self.sheet.clone(), index as usize)
     }
 }
 

@@ -34,6 +34,8 @@ impl ForbidPattern for ForbidCorner {
 
         // TODO: place entrances and exits and some path between them
         fi.forbid_all_patterns_except(self.start, 6, rng).unwrap();
+        fi.forbid_all_patterns_except(Coord::new(20, 20), 6, rng)
+            .unwrap();
     }
 }
 
@@ -133,6 +135,7 @@ pub fn gen_map(
             };
         }
     });
+
     let my_map = SanityMap(walls);
     let player_idx = my_map.point2d_to_index(Point::new(start.x, start.y));
     let dijkstra = DijkstraMap::new(width, height, &[player_idx], &my_map, 1000.);

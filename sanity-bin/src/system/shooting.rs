@@ -94,7 +94,7 @@ impl<'a> System<'a> for ShootingSystem {
                                                 dir: shoot_dir.1,
                                                 step: 5,
                                             })
-                                            .with(bullet_res.new_sprite())
+                                            .with(bullet_res.new_sprite(()))
                                             .build();
 
                                         let control_set =

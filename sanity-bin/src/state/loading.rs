@@ -29,6 +29,7 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Load
         // register components, may be able to remove if used by system
         world.register::<Named>();
         world.register::<Handle<sanity_lib::assets::Pairs>>();
+        world.register::<crate::component::Item>();
 
         world.insert(crate::state::Sanity::default());
 
@@ -38,6 +39,15 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Load
                 &world,
                 "sprites/bullets.png",
                 "sprites/bullets.ron",
+                &mut self.progress_counter,
+            ),
+        });
+
+        world.insert(crate::resource::Items {
+            sheet: crate::resource::load_sprite_sheet(
+                &world,
+                "sprites/items.png",
+                "sprites/items.ron",
                 &mut self.progress_counter,
             ),
         });
@@ -100,6 +110,7 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Load
                 player: self.player.take().expect("Player Loaded"),
                 map_spritesheet: self.map.take().expect("Map Loaded"),
                 pairs: self.pairs.take().expect("Pairs Loaded"),
+                walls: None,
             }))
         } else {
             Trans::None

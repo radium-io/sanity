@@ -1,4 +1,7 @@
-use crate::{component::Position, resource::Animated};
+use crate::{
+    component::Position,
+    resource::{Animated, Sprited},
+};
 use amethyst::{
     core::{math::Point3, Hidden, Transform},
     derive::SystemDesc,
@@ -30,6 +33,8 @@ impl<'a> System<'a> for SpawnSystem {
         ReadStorage<'a, crate::component::Enemy>,
         ReadStorage<'a, crate::component::Position>,
         ReadStorage<'a, crate::component::Health>,
+        ReadStorage<'a, crate::component::Item>,
+        ReadExpect<'a, crate::resource::Items>,
     );
 
     fn run(
@@ -44,14 +49,17 @@ impl<'a> System<'a> for SpawnSystem {
             enemies,
             positions,
             healths,
+            items,
+            items_res,
         ): Self::SystemData,
     ) {
         let mut num_enemies = (&enemies, &healths).join().count();
+        let mut num_items = (&items).join().count();
+
         let max_enemies = 10;
+        let max_items = 1;
 
-        let enemy_positions: Vec<_> = (&enemies, &positions).join().collect();
-
-        if num_enemies < max_enemies {
+        if num_enemies < max_enemies || num_items < max_items {
             for tilemap in (&mut walls).join() {
                 let my_map = SanityMap(tilemap);
 
@@ -79,6 +87,9 @@ impl<'a> System<'a> for SpawnSystem {
                     let mut rng = thread_rng();
                     if let Some(spawnable) = near_to_far.rsplit(|x| *x.1 < 8.).next() {
                         while spawnable.len() > max_enemies && num_enemies < max_enemies {
+                            let enemy_positions: Vec<_> =
+                                (&enemies, &positions, &healths).join().collect();
+
                             // TODO: this should be based on visibility
                             let pos = spawnable.choose(&mut rng).unwrap();
 
@@ -116,6 +127,43 @@ impl<'a> System<'a> for SpawnSystem {
 
                                     num_enemies += 1;
                                     println!("Spawn at {:?}", p);
+                                }
+                            }
+                        }
+
+                        while spawnable.len() > max_items && num_items < max_items {
+                            let mut item_positions: Vec<_> = (&items, &positions).join().collect();
+
+                            let pos = spawnable.choose(&mut rng).unwrap();
+
+                            let p = my_map.index_to_point2d(pos.0);
+
+                            if item_positions.iter().any(|x| x.1.pos == p) {
+                                println!("Item already at position, trying a new position.");
+                                continue;
+                            }
+
+                            if let Some(tile) = my_map.get(p) {
+                                if tile.walkable {
+                                    // should just store dijkstras for every entity that can move
+                                    let w = my_map
+                                        .0
+                                        .to_world(&Point3::new(p.x as u32, p.y as u32, 0), None);
+
+                                    lazy.create_entity(&entities)
+                                        .with(crate::component::Item {
+                                            item: crate::component::item::ItemType::Flashlight,
+                                        })
+                                        .with(Hidden)
+                                        .with(Position { pos: p })
+                                        .with(Transform::from(w))
+                                        .with(items_res.new_sprite(
+                                            crate::component::item::ItemType::Flashlight,
+                                        ))
+                                        .build();
+
+                                    num_items += 1;
+                                    println!("Spawn item at {:?}", p);
                                 }
                             }
                         }

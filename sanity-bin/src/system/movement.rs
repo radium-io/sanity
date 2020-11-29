@@ -29,9 +29,10 @@ impl<'a> System<'a> for MovementSystem {
         ReadStorage<'a, crate::component::Enemy>,
         ReadStorage<'a, crate::component::Health>,
         WriteStorage<'a, Hidden>,
-        ReadStorage<'a, crate::component::Player>,
+        WriteStorage<'a, crate::component::Player>,
         ReadStorage<'a, AnimationSet<usize, SpriteRender>>,
         WriteStorage<'a, AnimationControlSet<usize, SpriteRender>>,
+        ReadStorage<'a, crate::component::Item>,
     );
 
     fn run(
@@ -47,9 +48,10 @@ impl<'a> System<'a> for MovementSystem {
             enemies,
             healths,
             mut hiddens,
-            players,
+            mut players,
             animation_sets,
             mut control_sets,
+            items,
         ): Self::SystemData,
     ) {
         for tilemap in (&tilemaps).join() {
@@ -176,6 +178,9 @@ impl<'a> System<'a> for MovementSystem {
 
                         if intent.step == 0 {
                             position.pos = target;
+                            if players.get(entity).is_some() {
+                                println!("Moved to {:?}", target);
+                            }
                             if projectiles.get(entity).is_some() {
                                 intent.step = 5;
                             }
@@ -228,6 +233,17 @@ impl<'a> System<'a> for MovementSystem {
 
             for (entity, _) in (&entities, &projectiles).join() {
                 hiddens.remove(entity);
+            }
+
+            // collision with items
+            for (player, p_position) in (&mut players, &positions).join() {
+                for (ent, item, i_position) in (&entities, &items, &positions).join() {
+                    if p_position.pos == i_position.pos {
+                        println!("Collected item {:?}", item.item);
+                        player.inventory.push(item.item);
+                        entities.delete(ent);
+                    }
+                }
             }
         }
     }

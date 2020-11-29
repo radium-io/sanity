@@ -3,9 +3,9 @@ use rand::prelude::*;
 use std::convert::AsRef;
 use strum_macros::AsRefStr;
 
-#[derive(Debug, AsRefStr)]
+#[derive(Debug, PartialEq, Clone, Copy, AsRefStr)]
 #[strum(serialize_all = "snake_case")]
-pub enum Items {
+pub enum ItemType {
     Battery,
     Binoculars,
     Book,
@@ -40,15 +40,15 @@ pub enum Items {
     Wrench,
 }
 
-impl Default for Items {
+impl Default for ItemType {
     fn default() -> Self {
-        Items::Battery
+        ItemType::Battery
     }
 }
 
 #[derive(Default)]
 pub struct Item {
-    pub item: Items,
+    pub item: ItemType,
 }
 
 impl Item {

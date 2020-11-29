@@ -1,4 +1,3 @@
-use amethyst::renderer::palette;
 use amethyst::{
     core::{math::Point3, Hidden},
     derive::SystemDesc,
@@ -6,10 +5,14 @@ use amethyst::{
         prelude::{System, SystemData, WriteStorage},
         Entities, Join, ReadStorage,
     },
+    renderer::palette,
     tiles::{Map, MapStorage, TileMap},
 };
 use bracket_pathfinding::prelude::{field_of_view_set, Point};
-use sanity_lib::{map::SanityMap, tile::FloorTile, tile::RoomTile};
+use sanity_lib::{
+    map::SanityMap,
+    tile::{FloorTile, RoomTile},
+};
 
 #[derive(Default, SystemDesc)]
 pub struct VisibilitySystem {}
@@ -31,11 +34,11 @@ impl<'a> System<'a> for VisibilitySystem {
     ) {
         for floor in (&mut floor_maps).join() {
             for walls in (&mut wall_maps).join() {
-                for (_, position) in (&players, &positions).join() {
+                for (player, position) in (&players, &positions).join() {
                     let dim = *walls.dimensions();
                     let mut c = walls.clone();
                     let my_map = SanityMap(&mut c);
-                    let fov = field_of_view_set(position.pos, 3, &my_map);
+                    let fov = field_of_view_set(position.pos, player.sight(), &my_map);
 
                     for x in 0..dim.x {
                         for y in 0..dim.y {
@@ -74,7 +77,7 @@ impl<'a> System<'a> for VisibilitySystem {
                                 }
                             }
 
-                            for (entity, _, position) in (&entities, &enemies, &positions).join() {
+                            for (entity, position) in (&entities, &positions).join() {
                                 if x == position.pos.x as u32 && y == position.pos.y as u32 {
                                     if vis {
                                         hiddens.remove(entity);

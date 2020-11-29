@@ -2,7 +2,7 @@ mod collision;
 mod dijkstra;
 mod enemy;
 mod health;
-mod item;
+pub(crate) mod item;
 mod movement;
 mod player;
 mod position;
