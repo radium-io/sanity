@@ -168,8 +168,11 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Room
 
         if restart {
             world.exec(
-                |(entities, players): (Entities<'_>, ReadStorage<'_, crate::component::Player>)| {
-                    for (entity, _player) in (&entities, &players).join() {
+                |(entities, positions): (
+                    Entities<'_>,
+                    ReadStorage<'_, crate::component::Position>,
+                )| {
+                    for (entity, _) in (&entities, &positions).join() {
                         entities.delete(entity); // also deletes camera child
                     }
                 },
@@ -204,11 +207,6 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Room
         if let StateEvent::Window(event) = &event {
             if is_close_requested(&event) || is_key_down(&event, winit::VirtualKeyCode::Escape) {
                 Trans::Quit
-            } else if is_key_down(&event, winit::VirtualKeyCode::F) {
-                self.gen_map_exec(data.world);
-                self.map_generation += 1;
-
-                Trans::None
             } else {
                 Trans::None
             }

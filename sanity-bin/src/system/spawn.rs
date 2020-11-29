@@ -53,13 +53,11 @@ impl<'a> System<'a> for SpawnSystem {
             items_res,
         ): Self::SystemData,
     ) {
-        let mut num_enemies = (&enemies, &healths).join().count();
-        let mut num_items = (&items).join().count();
-
         let max_enemies = 10;
         let max_items = 1;
 
-        if num_enemies < max_enemies || num_items < max_items {
+        if (&enemies, &healths).join().count() < max_enemies || (&items).join().count() < max_items
+        {
             for tilemap in (&mut walls).join() {
                 let my_map = SanityMap(tilemap);
 
@@ -85,18 +83,20 @@ impl<'a> System<'a> for SpawnSystem {
                         .sort_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap_or(Ordering::Equal));
 
                     let mut rng = thread_rng();
+
+                    // TODO: valid locations are hardcoded to 8 squares away
+                    //  I would like to specify percentile brackets of distance
                     if let Some(spawnable) = near_to_far.rsplit(|x| *x.1 < 8.).next() {
-                        while spawnable.len() > max_enemies && num_enemies < max_enemies {
-                            let enemy_positions: Vec<_> =
-                                (&enemies, &positions, &healths).join().collect();
+                        let mut current_enemies = (&enemies, &healths).join().count();
 
-                            // TODO: this should be based on visibility
+                        while spawnable.len() > max_enemies && current_enemies < max_enemies {
                             let pos = spawnable.choose(&mut rng).unwrap();
-
-                            println!("Checking {:?}", pos);
                             let p = my_map.index_to_point2d(pos.0);
 
-                            if enemy_positions.iter().any(|x| x.1.pos == p) {
+                            if (&enemies, &positions, &healths)
+                                .join()
+                                .any(|x| x.1.pos == p)
+                            {
                                 println!("Enemy already at position, trying a new position.");
                                 continue;
                             }
@@ -110,7 +110,7 @@ impl<'a> System<'a> for SpawnSystem {
                                     let mut t = Transform::default();
                                     t.set_translation(w);
                                     t.move_forward(2.);
-                                    t.move_up(8.);
+                                    t.move_up(8.); // sprite offset
 
                                     lazy.create_entity(&entities)
                                         .with(crate::component::Enemy)
@@ -125,20 +125,19 @@ impl<'a> System<'a> for SpawnSystem {
                                         .with(enemies_res.new_animated_sprite())
                                         .build();
 
-                                    num_enemies += 1;
+                                    current_enemies += 1;
                                     println!("Spawn at {:?}", p);
                                 }
                             }
                         }
 
-                        while spawnable.len() > max_items && num_items < max_items {
-                            let mut item_positions: Vec<_> = (&items, &positions).join().collect();
+                        let mut current_items = (&items).join().count();
 
+                        while spawnable.len() > max_items && current_items < max_items {
                             let pos = spawnable.choose(&mut rng).unwrap();
-
                             let p = my_map.index_to_point2d(pos.0);
 
-                            if item_positions.iter().any(|x| x.1.pos == p) {
+                            if (&items, &positions).join().any(|x| x.1.pos == p) {
                                 println!("Item already at position, trying a new position.");
                                 continue;
                             }
@@ -162,7 +161,7 @@ impl<'a> System<'a> for SpawnSystem {
                                         ))
                                         .build();
 
-                                    num_items += 1;
+                                    current_items += 1;
                                     println!("Spawn item at {:?}", p);
                                 }
                             }
