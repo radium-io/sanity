@@ -1,14 +1,15 @@
-use amethyst::tiles::Map;
 use amethyst::{
     core::math::Point3,
-    tiles::{MapStorage, TileMap},
+    tiles::{Map, MapStorage, TileMap},
 };
 use bracket_pathfinding::prelude::*;
 use direction::Coord;
 use rand::{thread_rng, Rng};
-use sanity_lib::{map::SanityMap, tile::FloorTile, tile::RoomTile};
-use wfc::*;
-use wfc::{PatternDescription, PatternTable};
+use sanity_lib::{
+    map::SanityMap,
+    tile::{FloorTile, RoomTile},
+};
+use wfc::{PatternDescription, PatternTable, *};
 
 struct ForbidCorner {
     width: i32,
@@ -56,12 +57,12 @@ pub fn gen_map(
     pairs: &sanity_lib::assets::Pairs,
     start: Coord,
 ) {
-    let mut v: Vec<PatternDescription> = Vec::new();
+    let mut patterns: Vec<PatternDescription> = Vec::new();
     let (width, height) = (walls.dimensions().x, walls.dimensions().y);
 
-    println!("{:?}, {:?}", width, height);
-
+    // this is the highest index we currently support in the dungeon spritesheet
     let max_tiles = 115;
+
     for idx in 0..max_tiles {
         let (mut n, mut s) = to_vec(&pairs.ns, idx, max_tiles);
         let (mut w, mut e) = to_vec(&pairs.we, idx, max_tiles);
@@ -81,12 +82,14 @@ pub fn gen_map(
         }
 
         if !s.is_empty() || !e.is_empty() || !n.is_empty() || !w.is_empty() {
-            v.push(PatternDescription::new(
+            patterns.push(PatternDescription::new(
                 wt,
                 direction::CardinalDirectionTable::new_array([n, e, s, w]),
             ));
         } else {
-            v.push(PatternDescription::new(
+            // workaround for tiles with no matchers, we just state they can only match with self
+            // limitation of wfc library is that every pattern index is considered
+            patterns.push(PatternDescription::new(
                 wt,
                 direction::CardinalDirectionTable::new_array([
                     vec![idx as u32],
@@ -98,13 +101,11 @@ pub fn gen_map(
         }
     }
 
-    let patterns: PatternTable<PatternDescription> = PatternTable::from_vec(v);
-
     let mut context = wfc::Context::new();
     let mut wave = wfc::Wave::new(wfc::Size::try_new(width, height).unwrap());
-    let stats = wfc::GlobalStats::new(patterns);
+    let stats = wfc::GlobalStats::new(PatternTable::from_vec(patterns));
 
-    let mut rng = thread_rng();
+    let mut rng = thread_rng(); // FIXME: allow seeding this
 
     let mut wfc_run = wfc::RunBorrow::new_wrap_forbid(
         &mut context,
@@ -119,32 +120,22 @@ pub fn gen_map(
         &mut rng,
     );
 
-    println!("Running collapse!");
-
     wfc_run.collapse_retrying(wfc::retry::Forever, &mut rng);
 
     wave.grid().map_ref_with_coord(|c, cell| {
-        if let Some(mut tile) = walls.get_mut(&Point3::new(c.x as u32, c.y as u32, 0)) {
-            let s = Some(
-                cell.chosen_pattern_id()
-                    .expect(&format!("Chosen tile for coord {:?}.", cell)) as usize,
-            );
-            tile.visited = false;
-            tile.visible = false;
-            tile.tint = None;
-            tile.sprite = s;
-            tile.walkable = pairs.walkable.contains(&s.unwrap());
+        if let Some(tile) = walls.get_mut(&Point3::new(c.x as u32, c.y as u32, 0)) {
+            let sprite = cell.chosen_pattern_id().ok().map(|t| t as usize);
+
+            *tile = RoomTile {
+                sprite,
+                walkable: pairs.walkable.contains(&sprite.unwrap()),
+                ..Default::default()
+            };
         }
     });
-
     let my_map = SanityMap(walls);
-    let dijkstra = DijkstraMap::new(
-        width,
-        height,
-        &[my_map.point2d_to_index(Point::new(start.x, start.y))],
-        &my_map,
-        1000.,
-    );
+    let player_idx = my_map.point2d_to_index(Point::new(start.x, start.y));
+    let dijkstra = DijkstraMap::new(width, height, &[player_idx], &my_map, 1000.);
 
     for x in 0..width {
         for y in 0..height {
