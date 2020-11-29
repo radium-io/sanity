@@ -52,6 +52,15 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Load
             ),
         });
 
+        world.insert(crate::resource::Exits {
+            sheet: crate::resource::load_sprite_sheet(
+                &world,
+                "Dungeon_Tileset.png",
+                "Dungeon_Tileset.ron",
+                &mut self.progress_counter,
+            ),
+        });
+
         let anims = crate::resource::load_anim_prefab(
             &mut world,
             "sprites/slime.anim.ron",

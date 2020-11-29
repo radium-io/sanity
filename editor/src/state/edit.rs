@@ -84,6 +84,8 @@ impl SimpleState for EditState {
             while x < 16 {
                 if let Some(tile) = map.get_mut(&Point3::new(x, y, 0)) {
                     tile.sprite = Some(x as usize + (y * 16) as usize);
+                    tile.visible = true;
+                    tile.visited = true;
                 }
                 x += 1;
             }

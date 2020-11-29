@@ -35,6 +35,8 @@ impl<'a> System<'a> for SpawnSystem {
         ReadStorage<'a, crate::component::Health>,
         ReadStorage<'a, crate::component::Item>,
         ReadExpect<'a, crate::resource::Items>,
+        ReadStorage<'a, crate::component::Exit>,
+        ReadExpect<'a, crate::resource::Exits>,
     );
 
     fn run(
@@ -51,6 +53,8 @@ impl<'a> System<'a> for SpawnSystem {
             healths,
             items,
             items_res,
+            exits,
+            exits_res,
         ): Self::SystemData,
     ) {
         let max_enemies = 10;
@@ -87,16 +91,15 @@ impl<'a> System<'a> for SpawnSystem {
                     // TODO: valid locations are hardcoded to 8 squares away
                     //  I would like to specify percentile brackets of distance
                     if let Some(spawnable) = near_to_far.rsplit(|x| *x.1 < 8.).next() {
-                        let mut current_enemies = (&enemies, &healths).join().count();
+                        let enemy_positions: Vec<_> =
+                            (&enemies, &positions, &healths).join().collect();
+                        let mut current_enemies = enemy_positions.len();
 
                         while spawnable.len() > max_enemies && current_enemies < max_enemies {
                             let pos = spawnable.choose(&mut rng).unwrap();
                             let p = my_map.index_to_point2d(pos.0);
 
-                            if (&enemies, &positions, &healths)
-                                .join()
-                                .any(|x| x.1.pos == p)
-                            {
+                            if enemy_positions.iter().any(|x| x.1.pos == p) {
                                 println!("Enemy already at position, trying a new position.");
                                 continue;
                             }
@@ -107,14 +110,11 @@ impl<'a> System<'a> for SpawnSystem {
                                     let w = my_map
                                         .0
                                         .to_world(&Point3::new(p.x as u32, p.y as u32, 0), None);
-                                    let mut t = Transform::default();
-                                    t.set_translation(w);
-                                    t.move_forward(2.);
-                                    t.move_up(8.); // sprite offset
+                                    let mut t = Transform::from(w);
+                                    t.move_up(8.);
 
                                     lazy.create_entity(&entities)
                                         .with(crate::component::Enemy)
-                                        .with(Transparent)
                                         .with(Hidden)
                                         .with(Position { pos: p })
                                         .with(crate::component::Health {
@@ -131,13 +131,14 @@ impl<'a> System<'a> for SpawnSystem {
                             }
                         }
 
-                        let mut current_items = (&items).join().count();
+                        let item_positions: Vec<_> = (&items, &positions).join().collect();
+                        let mut current_items = item_positions.len();
 
                         while spawnable.len() > max_items && current_items < max_items {
                             let pos = spawnable.choose(&mut rng).unwrap();
                             let p = my_map.index_to_point2d(pos.0);
 
-                            if (&items, &positions).join().any(|x| x.1.pos == p) {
+                            if item_positions.iter().any(|x| x.1.pos == p) {
                                 println!("Item already at position, trying a new position.");
                                 continue;
                             }
@@ -163,6 +164,37 @@ impl<'a> System<'a> for SpawnSystem {
 
                                     current_items += 1;
                                     println!("Spawn item at {:?}", p);
+                                }
+                            }
+                        }
+
+                        let mut num_exits = (&exits).join().count();
+
+                        while spawnable.len() >= 1 && num_exits < 1 {
+                            let pos = spawnable.choose(&mut rng).unwrap();
+                            let p = my_map.index_to_point2d(pos.0);
+                            if item_positions.iter().any(|x| x.1.pos == p) {
+                                println!("Item already at exit position, trying a new position.");
+                                continue;
+                            }
+                            if let Some(tile) = my_map.get(p) {
+                                if tile.walkable {
+                                    let w = my_map
+                                        .0
+                                        .to_world(&Point3::new(p.x as u32, p.y as u32, 0), None);
+                                    let mut t = Transform::from(w);
+                                    t.move_up(8.);
+
+                                    lazy.create_entity(&entities)
+                                        .with(crate::component::Exit)
+                                        .with(Hidden)
+                                        .with(Position { pos: p })
+                                        .with(t)
+                                        .with(exits_res.new_sprite(()))
+                                        .build();
+
+                                    num_exits += 1;
+                                    println!("Spawn exit at {:?}", p);
                                 }
                             }
                         }

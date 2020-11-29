@@ -54,6 +54,16 @@ impl Sprited<()> for Bullets {
     }
 }
 
+pub struct Exits {
+    pub sheet: Handle<SpriteSheet>,
+}
+
+impl Sprited<()> for Exits {
+    fn new_sprite(&self, _: ()) -> SpriteRender {
+        SpriteRender::new(self.sheet.clone(), 227)
+    }
+}
+
 pub struct Items {
     pub sheet: Handle<SpriteSheet>,
 }

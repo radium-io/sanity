@@ -1,6 +1,7 @@
 mod collision;
 mod dijkstra;
 mod enemy;
+mod exit;
 mod health;
 pub(crate) mod item;
 mod movement;
@@ -12,6 +13,7 @@ mod weapon;
 pub use collision::Collision;
 pub use dijkstra::Dijkstra;
 pub use enemy::Enemy;
+pub use exit::Exit;
 pub use health::Health;
 pub use item::Item;
 pub use movement::MovementIntent;

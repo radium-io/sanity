@@ -7,13 +7,14 @@ Label(
         x: 100.,
         y: -25.,
         width: 500.,
-        height: 50.,
+        height: 500.,
         opaque: false,
     ),
     text: (
-        text: "N/A",
-        font_size: 25.,
-        color: (1., 1., 1., 1.),
+        align: TopLeft,
+        text: "Left Click a Tile",
+        font_size: 20.,
+        color: (0.8, 1., 1., 1.),
         font: File("fonts/Bangers-Regular.ttf", ("TTF", ())),
         line_mode: Wrap
     ),

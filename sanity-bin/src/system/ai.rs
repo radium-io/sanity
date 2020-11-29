@@ -74,7 +74,7 @@ impl<'a> System<'a> for AISystem {
                                 let coord_pt = target_pos - position.pos;
                                 let player_coord_pt = player_pos.pos - position.pos;
 
-                                println!("{:?} {:?}", position.pos, dist);
+                                //println!("{:?} {:?}", position.pos, dist);
                                 if dist > 1. {
                                     intents.insert(
                                         entity,

@@ -42,6 +42,9 @@ impl RoomState {
             ))
             .build();
 
+        let mut transform = Transform::default();
+        transform.move_backward(20.);
+
         self.walls = Some(
             world
                 .create_entity()
@@ -50,6 +53,7 @@ impl RoomState {
                     tile_size,
                     Some(self.map_spritesheet.clone()),
                 ))
+                .with(transform)
                 .build(),
         );
     }
@@ -81,10 +85,10 @@ impl RoomState {
 
         let mut t = Transform::default();
         t.move_up(8.);
+        t.move_backward(1.);
 
         world
             .create_entity()
-            .with(Transparent)
             .with(crate::component::Player {
                 weapon: Some(weapon),
                 inventory: vec![],
