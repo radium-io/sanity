@@ -17,6 +17,8 @@ use sanity_lib::{
 #[derive(Default, SystemDesc)]
 pub struct VisibilitySystem {}
 
+use std::collections::HashSet;
+
 impl<'a> System<'a> for VisibilitySystem {
     type SystemData = (
         Entities<'a>,
@@ -26,11 +28,21 @@ impl<'a> System<'a> for VisibilitySystem {
         WriteStorage<'a, Hidden>,
         ReadStorage<'a, crate::component::Enemy>,
         ReadStorage<'a, crate::component::Position>,
+        ReadStorage<'a, crate::component::Projectile>,
     );
 
     fn run(
         &mut self,
-        (entities, mut wall_maps, mut floor_maps, players, mut hiddens, enemies, positions): Self::SystemData,
+        (
+            entities,
+            mut wall_maps,
+            mut floor_maps,
+            players,
+            mut hiddens,
+            enemies,
+            positions,
+            projectiles,
+        ): Self::SystemData,
     ) {
         for floor in (&mut floor_maps).join() {
             for walls in (&mut wall_maps).join() {
@@ -38,7 +50,12 @@ impl<'a> System<'a> for VisibilitySystem {
                     let dim = *walls.dimensions();
                     let mut c = walls.clone();
                     let my_map = SanityMap(&mut c);
-                    let fov = field_of_view_set(position.pos, player.sight(), &my_map);
+                    let mut fov = field_of_view_set(position.pos, player.sight(), &my_map);
+
+                    for (projectile, position) in (&projectiles, &positions).join() {
+                        let f = field_of_view_set(position.pos, 1, &my_map);
+                        fov.extend(&f);
+                    }
 
                     for x in 0..dim.x {
                         for y in 0..dim.y {
