@@ -17,6 +17,7 @@ serde = "1.0.117"
 wfc = "0.9.2"
 bracket-pathfinding = "0.8.1"
 strum = "0.19.5"
+strum_macros = "0.20.1"
 
 [features]
 default = ["vulkan"]
