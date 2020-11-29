@@ -10,3 +10,11 @@ pub mod player;
 pub mod shooting;
 pub mod spawn;
 pub mod visibility;
+
+/*
+pub fn get_maps(
+    walls: Option<Entity>,
+    floors: Option<Entity>,
+) -> (TileMap<RoomTile>, TileMap<FloorTile>) {
+}
+*/

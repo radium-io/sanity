@@ -34,24 +34,37 @@ impl<'a> System<'a> for CollisionSystem {
             mut floor_maps,
         ): Self::SystemData,
     ) {
-        for (entity, _player, collision) in (&entities, &players, &collisions).join() {
-            if collision.with.is_some() {
-                if let Some(enemy_health) = healths.get(collision.with.unwrap()) {
-                    if enemy_health.current > 0 {
-                        if let Some(h) = healths.get_mut(entity) {
-                            h.current -= 10; // TODO: depend upon monsters weapon
+        for (entity, collision) in (&entities, &collisions).join() {
+            if let Some(with) = collision.with {
+                // Enemey collided with something due to move or attack
+                if let Some(enemy) = enemies.get(entity) {
+                    if let Some(player) = players.get(with) {
+                        if let Some(player_health) = healths.get_mut(with) {
+                            if player_health.current > 0 {
+                                player_health.current -= 10; // Melee attack damage
+                            }
                         }
                     }
                 }
-            }
-        }
 
-        for (collision, _enemy, health) in (&collisions, &enemies, &mut healths).join() {
-            if let Some(with) = collision.with {
-                if let Some(proj) = projectiles.get(with) {
-                    health.current -= proj.damage as i32;
-                } else {
-                    health.current -= 10;
+                // Player collided with something due to action
+                if let Some(player) = players.get(entity) {
+                    if let Some(enemy) = enemies.get(with) {
+                        if let Some(enemy_health) = healths.get_mut(with) {
+                            if enemy_health.current > 0 {
+                                enemy_health.current -= 10; // Melee attack damage
+                            }
+                        }
+                    }
+                }
+
+                // Projectile collided with something
+                if let Some(projectile) = projectiles.get(entity) {
+                    if let Some(enemy) = enemies.get(with) {
+                        if let Some(enemy_health) = healths.get_mut(with) {
+                            enemy_health.current -= projectile.damage as i32;
+                        }
+                    }
                 }
             }
         }

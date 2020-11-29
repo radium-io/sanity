@@ -2,8 +2,8 @@ use crate::{gamedata::CustomGameData, resource::Sprited, AnimatedSpritePrefab};
 use amethyst::{
     assets::{AssetStorage, Handle, Loader, Prefab, ProgressCounter, RonFormat},
     core::{
-        math::{Point2, Vector3},
-        Named, Parent, Transform,
+        math::{Point2, Point3, Vector3},
+        Hidden, Named, Parent, Transform,
     },
     ecs::prelude::*,
     input::{is_close_requested, is_key_down},
@@ -18,13 +18,16 @@ use bracket_pathfinding::prelude::Point;
 use sanity_lib::tile::{FloorTile, RoomTile};
 
 pub struct RoomState {
-    pub map_generation: usize,
+    pub level: usize,
     pub width: u32,
     pub height: u32,
     pub pairs: Handle<sanity_lib::assets::Pairs>,
     pub camera: Option<Entity>,
     pub walls: Option<Entity>,
-    pub player: Handle<Prefab<AnimatedSpritePrefab>>,
+    pub floors: Option<Entity>,
+    pub player: Option<Entity>,
+    pub hud: Option<Entity>,
+    pub player_anim: Handle<Prefab<AnimatedSpritePrefab>>,
     pub map_spritesheet: Handle<SpriteSheet>,
 }
 
@@ -33,14 +36,16 @@ impl RoomState {
         let map_size = Vector3::new(self.width, self.height, 1);
         let tile_size = Vector3::new(32, 32, 1);
 
-        world
-            .create_entity()
-            .with(TileMap::<FloorTile>::new(
-                map_size,
-                tile_size,
-                Some(self.map_spritesheet.clone()),
-            ))
-            .build();
+        self.floors = Some(
+            world
+                .create_entity()
+                .with(TileMap::<FloorTile>::new(
+                    map_size,
+                    tile_size,
+                    Some(self.map_spritesheet.clone()),
+                ))
+                .build(),
+        );
 
         let mut transform = Transform::default();
         transform.move_backward(20.);
@@ -58,7 +63,7 @@ impl RoomState {
         );
     }
 
-    fn init_camera(&mut self, world: &mut World, player: Entity) {
+    fn init_camera(&mut self, world: &mut World) {
         let (width, height) = {
             let dim = world.read_resource::<ScreenDimensions>();
             (dim.width(), dim.height())
@@ -66,14 +71,16 @@ impl RoomState {
         self.camera = Some(
             world
                 .create_entity()
-                .with(Camera::standard_2d(width / 2., height / 2.))
+                .with(Camera::standard_2d(width / 1., height / 1.))
                 .with(Transform::from(Vector3::new(0., 0., 100.)))
-                .with(Parent { entity: player })
+                .with(Parent {
+                    entity: self.player.unwrap(),
+                })
                 .build(),
         );
     }
 
-    fn init_player(&self, world: &mut World, pos: Point) -> Entity {
+    fn init_player(&mut self, world: &mut World, pos: Point) {
         let weapon = world
             .create_entity()
             .with(crate::component::Weapon {
@@ -87,20 +94,25 @@ impl RoomState {
         t.move_up(8.);
         t.move_backward(1.);
 
-        world
-            .create_entity()
-            .with(crate::component::Player {
-                weapon: Some(weapon),
-                inventory: vec![],
-            })
-            .with(crate::component::Health {
-                max: 30,
-                current: 30,
-            })
-            .with(crate::component::Position { pos })
-            .with(self.player.clone())
-            .with(t)
-            .build()
+        self.player = Some(
+            world
+                .create_entity()
+                .with(crate::component::Player {
+                    weapon: Some(weapon),
+                    inventory: vec![],
+                })
+                .with(crate::component::Health {
+                    max: 30,
+                    current: 30,
+                })
+                .with(crate::component::Position {
+                    pos,
+                    map: self.walls.unwrap(),
+                })
+                .with(self.player_anim.clone())
+                .with(t)
+                .build(),
+        );
     }
 
     fn gen_map_exec(&self, world: &mut World) {
@@ -121,20 +133,18 @@ impl RoomState {
                 ReadStorage<'_, crate::component::Player>,
                 ReadStorage<'_, crate::component::Position>,
             )| {
-                for floor in (&mut floor_maps).join() {
-                    for walls in (&mut wall_maps).join() {
-                        for (_, pos) in (&players, &positions).join() {
-                            if pos.xy() < Point2::new(self.width - 3, self.height - 3)
-                                && pos.xy() > Point2::new(2, 2)
-                            {
-                                crate::map::gen_map(
-                                    walls,
-                                    floor,
-                                    assets.get(&self.pairs.clone()).unwrap(),
-                                    pos.coord(),
-                                );
-                            }
-                        }
+                let floor = floor_maps.get_mut(self.floors.unwrap()).unwrap();
+                let walls = wall_maps.get_mut(self.walls.unwrap()).unwrap();
+                for (_, pos) in (&players, &positions).join() {
+                    if pos.xy() < Point2::new(self.width - 3, self.height - 3)
+                        && pos.xy() > Point2::new(2, 2)
+                    {
+                        crate::map::gen_map(
+                            walls,
+                            floor,
+                            assets.get(&self.pairs.clone()).unwrap(),
+                            pos.coord(),
+                        );
                     }
                 }
             },
@@ -146,16 +156,50 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Room
     fn on_start(&mut self, data: StateData<'_, CustomGameData<'a, 'b>>) {
         let StateData { mut world, .. } = data;
 
-        let player = self.init_player(world, Point::new(self.width / 2, self.height / 2));
-        self.init_camera(world, player);
         self.init_map(world);
 
-        self.gen_map_exec(world);
-        self.map_generation += 1;
+        let start = Point::new(self.width / 2, self.height / 2);
 
-        world.exec(|mut creator: UiCreator<'_>| {
-            creator.create("ui/hud.ron", ());
-        });
+        if self.player.is_none() {
+            self.init_player(world, start);
+        } else {
+            println!("Moving Player to start position");
+            world.exec(
+                |(mut positions, maps, mut transforms): (
+                    WriteStorage<'_, crate::component::Position>,
+                    WriteStorage<'_, TileMap<RoomTile>>,
+                    WriteStorage<'_, Transform>,
+                )| {
+                    let mut pos = positions.get_mut(self.player.unwrap()).unwrap();
+                    pos.map = self.walls.unwrap();
+
+                    let p = maps.get(self.walls.unwrap()).unwrap();
+                    let mut t = Transform::from(
+                        p.to_world(&Point3::new(pos.pos.x as u32, pos.pos.y as u32, 0), None),
+                    );
+                    t.move_up(8.);
+                    t.move_backward(1.);
+                    transforms.insert(self.player.unwrap(), t);
+                },
+            );
+        }
+        self.gen_map_exec(world);
+
+        if self.camera.is_none() {
+            self.init_camera(world);
+        }
+
+        if self.hud.is_none() {
+            world.exec(|mut creator: UiCreator<'_>| {
+                self.hud = Some(creator.create("ui/hud.ron", ()));
+            });
+        }
+
+        let mut sanity_res = world.write_resource::<crate::state::Sanity>();
+        sanity_res.level.pop();
+        sanity_res.floor.pop();
+        sanity_res.level.push(self.walls);
+        sanity_res.floor.push(self.floors);
     }
 
     fn on_resume(&mut self, data: StateData<'_, CustomGameData<'a, 'b>>) {
@@ -182,10 +226,9 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Room
                 },
             );
             world.maintain();
-            let player = self.init_player(world, Point::new(self.width / 2, self.height / 2));
-            self.init_camera(world, player);
+            self.init_player(world, Point::new(self.width / 2, self.height / 2));
+            self.init_camera(world);
             self.gen_map_exec(world);
-            self.map_generation += 1;
         }
     }
 
@@ -193,13 +236,57 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Room
         &mut self,
         data: StateData<'_, CustomGameData<'_, '_>>,
     ) -> Trans<CustomGameData<'a, 'b>, StateEvent> {
-        data.data.update(&data.world, true);
+        let StateData { mut world, .. } = data;
 
-        let sanity_res = data.world.read_resource::<crate::state::Sanity>();
-        if sanity_res.game_over {
-            println!("Game Over");
-            return Trans::Push(Box::new(super::gameover::GameOverState));
+        let mut descend = false;
+
+        {
+            let sanity_res = world.read_resource::<crate::state::Sanity>();
+            if sanity_res.game_over {
+                println!("Game Over");
+                return Trans::Push(Box::new(super::gameover::GameOverState));
+            }
+
+            if sanity_res.level.len() > self.level {
+                descend = true;
+            }
         }
+
+        if descend {
+            println!("Descending");
+            world.exec(
+                |(entities, positions, mut hiddens): (
+                    Entities<'_>,
+                    ReadStorage<'_, crate::component::Position>,
+                    WriteStorage<'_, Hidden>,
+                )| {
+                    hiddens.insert(self.floors.unwrap(), Hidden);
+                    hiddens.insert(self.walls.unwrap(), Hidden);
+
+                    for (entity, _) in (&entities, &positions).join() {
+                        if entity != self.player.unwrap() {
+                            entities.delete(entity);
+                        }
+                    }
+                },
+            );
+            return Trans::Push(Box::new(RoomState {
+                level: self.level + 1,
+                width: 24,
+                height: 24,
+                player: self.player,
+                camera: self.camera,
+                player_anim: self.player_anim.clone(),
+                map_spritesheet: self.map_spritesheet.clone(),
+                pairs: self.pairs.clone(),
+                walls: None,
+                floors: None,
+                hud: self.hud,
+            }));
+        }
+
+        data.data.update(&world, true);
+
         Trans::None
     }
 

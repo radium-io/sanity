@@ -34,8 +34,6 @@ impl ForbidPattern for ForbidCorner {
 
         // TODO: place entrances and exits and some path between them
         fi.forbid_all_patterns_except(self.start, 6, rng).unwrap();
-        fi.forbid_all_patterns_except(Coord::new(20, 20), 6, rng)
-            .unwrap();
     }
 }
 
@@ -52,15 +50,8 @@ fn to_vec(p: &[(usize, usize)], idx: usize, max: usize) -> (Vec<u32>, Vec<u32>) 
     )
 }
 
-#[allow(clippy::many_single_char_names)]
-pub fn gen_map(
-    walls: &mut TileMap<RoomTile>,
-    floor: &mut TileMap<FloorTile>,
-    pairs: &sanity_lib::assets::Pairs,
-    start: Coord,
-) {
+fn gen_patterns(pairs: &sanity_lib::assets::Pairs) -> Vec<PatternDescription> {
     let mut patterns: Vec<PatternDescription> = Vec::new();
-    let (width, height) = (walls.dimensions().x, walls.dimensions().y);
 
     // this is the highest index we currently support in the dungeon spritesheet
     let max_tiles = 115;
@@ -103,64 +94,91 @@ pub fn gen_map(
         }
     }
 
+    patterns
+}
+
+#[allow(clippy::many_single_char_names)]
+pub fn gen_map(
+    walls: &mut TileMap<RoomTile>,
+    floor: &mut TileMap<FloorTile>,
+    pairs: &sanity_lib::assets::Pairs,
+    start: Coord,
+) {
+    let patterns = gen_patterns(&pairs);
     let mut context = wfc::Context::new();
-    let mut wave = wfc::Wave::new(wfc::Size::try_new(width, height).unwrap());
+    let (width, height) = (walls.dimensions().x, walls.dimensions().y);
     let stats = wfc::GlobalStats::new(PatternTable::from_vec(patterns));
 
     let mut rng = thread_rng(); // FIXME: allow seeding this
 
-    let mut wfc_run = wfc::RunBorrow::new_wrap_forbid(
-        &mut context,
-        &mut wave,
-        &stats,
-        wfc::wrap::WrapNone,
-        ForbidCorner {
-            width: width as i32,
-            height: height as i32,
-            start,
-        },
-        &mut rng,
-    );
+    let mut size = 0;
 
-    wfc_run.collapse_retrying(wfc::retry::Forever, &mut rng);
+    while size as f32 / (width as f32 * height as f32) < 0.5 {
+        println!("Generating new map");
+        let mut wave = wfc::Wave::new(wfc::Size::try_new(width, height).unwrap());
 
-    wave.grid().map_ref_with_coord(|c, cell| {
-        if let Some(tile) = walls.get_mut(&Point3::new(c.x as u32, c.y as u32, 0)) {
-            let sprite = cell.chosen_pattern_id().ok().map(|t| t as usize);
+        let mut wfc_run = wfc::RunBorrow::new_wrap_forbid(
+            &mut context,
+            &mut wave,
+            &stats,
+            wfc::wrap::WrapNone,
+            ForbidCorner {
+                width: width as i32,
+                height: height as i32,
+                start,
+            },
+            &mut rng,
+        );
 
-            *tile = RoomTile {
-                sprite,
-                walkable: pairs.walkable.contains(&sprite.unwrap()),
-                ..Default::default()
-            };
-        }
-    });
+        wfc_run.collapse_retrying(wfc::retry::Forever, &mut rng);
 
-    let my_map = SanityMap(walls);
-    let player_idx = my_map.point2d_to_index(Point::new(start.x, start.y));
-    let dijkstra = DijkstraMap::new(width, height, &[player_idx], &my_map, 1000.);
+        wave.grid().map_ref_with_coord(|c, cell| {
+            if let Some(tile) = walls.get_mut(&Point3::new(c.x as u32, c.y as u32, 0)) {
+                let sprite = cell.chosen_pattern_id().ok().map(|t| t as usize);
 
-    for x in 0..width {
-        for y in 0..height {
-            let p = Point::new(x, y);
-            if dijkstra.map[my_map.point2d_to_index(p)] == std::f32::MAX {
-                if let Some(tile) = my_map.0.get_mut(&Point3::new(x, y, 0)) {
-                    if tile.walkable {
-                        println!("Removing unreachable {:?}", p);
-                        tile.sprite = Some(pairs.null);
-                        tile.walkable = false;
+                *tile = RoomTile {
+                    sprite,
+                    walkable: pairs.walkable.contains(&sprite.unwrap()),
+                    ..Default::default()
+                };
+            }
+        });
 
-                        // TODO: remove surrounding tiles as well
+        let my_map = SanityMap(walls);
+        let player_idx = my_map.point2d_to_index(Point::new(start.x, start.y));
+        let dijkstra = DijkstraMap::new(width, height, &[player_idx], &my_map, 1000.);
+
+        for x in 0..width {
+            for y in 0..height {
+                let p = Point::new(x, y);
+                if dijkstra.map[my_map.point2d_to_index(p)] == std::f32::MAX {
+                    if let Some(tile) = my_map.0.get_mut(&Point3::new(x, y, 0)) {
+                        if tile.walkable {
+                            println!("Removing unreachable {:?}", p);
+                            tile.sprite = Some(pairs.null);
+                            tile.walkable = false;
+
+                            // TODO: remove surrounding tiles as well
+                        }
                     }
+                } else {
+                    // this tile is reachable
+                    size += 1;
+                }
+
+                if let Some(floor_tile) = floor.get_mut(&Point3::new(x, y, 0)) {
+                    floor_tile.visited = false;
+                    floor_tile.visible = false;
+                    floor_tile.tint = None;
+                    floor_tile.sprite = Some(88);
                 }
             }
-
-            if let Some(floor_tile) = floor.get_mut(&Point3::new(x, y, 0)) {
-                floor_tile.visited = false;
-                floor_tile.visible = false;
-                floor_tile.tint = None;
-                floor_tile.sprite = Some(88);
-            }
         }
+
+        println!(
+            "{} walkable tiles, {}% walkable",
+            size,
+            size as f32 / (width * height) as f32 * 100.
+        );
     }
 }

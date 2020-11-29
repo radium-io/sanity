@@ -111,15 +111,18 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Load
                 entities.delete(self.loading.unwrap());
             });
 
-            Trans::Switch(Box::new(RoomState {
+            Trans::Push(Box::new(RoomState {
                 camera: None,
-                map_generation: 0,
-                width: 48,
-                height: 32,
-                player: self.player.take().expect("Player Loaded"),
+                level: 1,
+                width: 12,
+                height: 12,
+                player_anim: self.player.take().expect("Player Loaded"),
                 map_spritesheet: self.map.take().expect("Map Loaded"),
                 pairs: self.pairs.take().expect("Pairs Loaded"),
+                player: None,
                 walls: None,
+                floors: None,
+                hud: None,
             }))
         } else {
             Trans::None

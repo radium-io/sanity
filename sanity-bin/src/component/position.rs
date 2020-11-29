@@ -1,14 +1,15 @@
 use amethyst::{
     core::math::{Point2, Point3},
-    ecs::{Component, DenseVecStorage},
+    ecs::{Component, DenseVecStorage, Entity},
 };
 use bracket_pathfinding::prelude::Point;
 use direction::Coord;
 use std::ops::Add;
 
-#[derive(Clone)]
+#[derive(Clone, PartialEq)]
 pub struct Position {
     pub pos: Point,
+    pub map: Entity,
 }
 
 impl Component for Position {
@@ -34,6 +35,7 @@ impl Add<direction::CardinalDirection> for Position {
         let c = other.coord();
         Self {
             pos: Point::new(self.pos.x + c.x, self.pos.y + c.y),
+            map: self.map,
         }
     }
 }
