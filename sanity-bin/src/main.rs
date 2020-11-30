@@ -157,8 +157,8 @@ fn main() -> Result<()> {
                 .with_plugin(RenderTiles2DTransparent::<sanity_lib::tile::RoomTile>::default()),
         );
 
-    let first_state = state::LoadingState::default();
-    // let first_state = state::IntroState::default();
+    //let first_state = state::LoadingState::default();
+    let first_state = state::IntroState::default();
 
     let mut game = Application::build(app_root.parent().unwrap().join("assets"), first_state)?
         .with_frame_limit(FrameRateLimitStrategy::Yield, 101)

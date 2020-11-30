@@ -6,7 +6,7 @@ use amethyst::{
     },
     assets::{PrefabLoader, ProgressCounter, RonFormat},
     core::{Time, Transform},
-    ecs::{Entities, Entity, WriteStorage},
+    ecs::{Entities, Entity, Join, WriteStorage},
     prelude::*,
     renderer::rendy::mesh::{Normal, Position, Tangent, TexCoord},
     shred::Read,
@@ -44,8 +44,9 @@ pub struct IntroState {
 impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for IntroState {
     fn on_stop(&mut self, data: StateData<'_, CustomGameData<'a, 'b>>) {
         data.world.exec(|entities: Entities<'_>| {
-            entities.delete(self.moon.unwrap());
-            entities.delete(self.story.unwrap());
+            for e in (&entities).join() {
+                entities.delete(e);
+            }
         });
     }
 

@@ -59,7 +59,7 @@ impl<'a> System<'a> for ShootingSystem {
             sanity_res,
         ): Self::SystemData,
     ) {
-        if let Some(map_ent) = sanity_res.level.last().unwrap() {
+        if let Some(map_ent) = sanity_res.level.last().unwrap_or(&None) {
             if let Some(tilemap) = tilemaps.get(*map_ent) {
                 if time.absolute_time() - self.last_move > Duration::from_millis(350) {
                     for (entity, player, player_pos, animation_set) in

@@ -1,0 +1,21 @@
+#![enable(implicit_some)]
+Label(
+    transform: (
+        id: "gameover",
+        anchor: Middle,
+        pivot: Middle,
+        x: 0.,
+        y: 0.,
+        width: 0.5,
+        height: 0.5,
+        opaque: true,
+        percent: true,
+    ),
+    text: (
+        text: "Game Over\n\nPress R to restart current level.",
+        font_size: 55.,
+        color: (1., 1., 1., 1.),
+        font: File("fonts/Bangers-Regular.ttf", ("TTF", ())),
+        line_mode: Wrap
+    ),
+)

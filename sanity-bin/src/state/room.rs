@@ -244,7 +244,7 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Room
             let sanity_res = world.read_resource::<crate::state::Sanity>();
             if sanity_res.game_over {
                 println!("Game Over");
-                return Trans::Push(Box::new(super::gameover::GameOverState));
+                return Trans::Push(Box::new(super::gameover::GameOverState::default()));
             }
 
             if sanity_res.level.len() > self.level {

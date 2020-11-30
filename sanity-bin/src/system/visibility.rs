@@ -48,7 +48,7 @@ impl<'a> System<'a> for VisibilitySystem {
     ) {
         if let Some(f_ent) = sanity_res.floor.last().unwrap_or(&None) {
             if let Some(floor) = floor_maps.get_mut(*f_ent) {
-                if let Some(map_ent) = sanity_res.level.last().unwrap() {
+                if let Some(map_ent) = sanity_res.level.last().unwrap_or(&None) {
                     if let Some(walls) = wall_maps.get_mut(*map_ent) {
                         for (player, position) in (&players, &positions).join() {
                             let dim = *walls.dimensions();

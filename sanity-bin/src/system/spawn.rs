@@ -64,7 +64,7 @@ impl<'a> System<'a> for SpawnSystem {
 
         if (&enemies, &healths).join().count() < max_enemies || (&items).join().count() < max_items
         {
-            if let Some(map_ent) = sanity_res.level.last().unwrap() {
+            if let Some(map_ent) = sanity_res.level.last().unwrap_or(&None) {
                 if let Some(tilemap) = walls.get_mut(*map_ent) {
                     let my_map = SanityMap(tilemap);
 

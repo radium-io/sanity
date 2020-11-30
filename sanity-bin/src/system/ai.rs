@@ -57,7 +57,7 @@ impl<'a> System<'a> for AISystem {
         if time.absolute_time() - self.last_move > Duration::from_millis(2000) {
             self.last_move = time.absolute_time();
 
-            if let Some(map_ent) = sanity_res.level.last().unwrap() {
+            if let Some(map_ent) = sanity_res.level.last().unwrap_or(&None) {
                 if let Some(tilemap) = tilemaps.get_mut(*map_ent) {
                     let dim = *tilemap.dimensions();
                     let (width, height) = (dim.x, dim.y);
