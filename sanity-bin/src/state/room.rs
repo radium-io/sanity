@@ -71,7 +71,7 @@ impl RoomState {
         self.camera = Some(
             world
                 .create_entity()
-                .with(Camera::standard_2d(width / 1., height / 1.))
+                .with(Camera::standard_2d(width / 2., height / 2.))
                 .with(Transform::from(Vector3::new(0., 0., 100.)))
                 .with(Parent {
                     entity: self.player.unwrap(),

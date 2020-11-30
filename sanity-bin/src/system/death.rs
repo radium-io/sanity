@@ -39,6 +39,15 @@ impl<'a> System<'a> for DeathSystem {
                     2,
                     DeferStartRelation::Start(1.),
                 );
+                control_set.add_deferred_animation(
+                    1,
+                    &animation_set.get(&1).unwrap(),
+                    EndControl::Stay,
+                    4.0,
+                    AnimationCommand::Start,
+                    3,
+                    DeferStartRelation::Start(1.),
+                );
 
                 killed.push(entity);
             }
