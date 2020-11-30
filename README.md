@@ -1,3 +1,15 @@
+# Moonsanity
+
+This game is an exploration of three things:
+
+1. Rust
+1. [Amethyst](https://amethyst.rs/)
+1. Spooky Moon Dungeons
+
+I was able to combine Amethyst with the wonderful [WaveFunctionCollapse](https://github.com/mxgmn/WaveFunctionCollapse) [implementation by @stevebob](https://github.com/stevebob/wfc)
+
+Additional thanks to [Elthen](https://www.patreon.com/elthen) for the [wonderful free sprite sets available here](https://elthen.itch.io/2d-pixel-art-dungeon-tileset), and [Adam Saltsman's Sci Fi Sprites](https://adamatomic.itch.io/sci-fi-inventory)  (psst check out [Overland](https://overland-game.com/))
+
 # Setup
 
 1. Clone this repo.
