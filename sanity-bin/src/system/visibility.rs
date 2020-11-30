@@ -1,9 +1,12 @@
+use crate::audio::{play_vo, Sounds};
 use amethyst::{
+    assets::AssetStorage,
+    audio::{output::Output, Source},
     core::{math::Point3, Hidden},
     derive::SystemDesc,
     ecs::{
         prelude::{System, SystemData, WriteStorage},
-        Entities, Join, Read, ReadStorage,
+        Entities, Join, Read, ReadExpect, ReadStorage,
     },
     renderer::palette,
     tiles::{Map, MapStorage, TileMap},
@@ -15,7 +18,9 @@ use sanity_lib::{
 };
 
 #[derive(Default, SystemDesc)]
-pub struct VisibilitySystem {}
+pub struct VisibilitySystem {
+    slime_seen: bool,
+}
 
 use std::collections::HashSet;
 
@@ -30,6 +35,9 @@ impl<'a> System<'a> for VisibilitySystem {
         ReadStorage<'a, crate::component::Position>,
         ReadStorage<'a, crate::component::Projectile>,
         Read<'a, crate::state::Sanity>,
+        Read<'a, AssetStorage<Source>>,
+        ReadExpect<'a, Sounds>,
+        Option<Read<'a, Output>>,
     );
 
     fn run(
@@ -44,6 +52,9 @@ impl<'a> System<'a> for VisibilitySystem {
             positions,
             projectiles,
             sanity_res,
+            storage,
+            sounds,
+            audio_output,
         ): Self::SystemData,
     ) {
         if let Some(f_ent) = sanity_res.floor.last().unwrap_or(&None) {
@@ -106,6 +117,15 @@ impl<'a> System<'a> for VisibilitySystem {
                                         {
                                             if vis {
                                                 hiddens.remove(entity);
+                                                if enemies.get(entity).is_some() && !self.slime_seen
+                                                {
+                                                    crate::audio::play_vo(
+                                                        &*sounds,
+                                                        &storage,
+                                                        audio_output.as_deref(),
+                                                    );
+                                                    self.slime_seen = true;
+                                                }
                                             } else {
                                                 hiddens.insert(entity, Hidden);
                                             }

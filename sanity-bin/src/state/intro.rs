@@ -1,12 +1,13 @@
-use std::time::Duration;
-
+use crate::audio::{play_intro, Sounds};
 use amethyst::{
     animation::{
         get_animation_set, AnimationCommand, AnimationSet, AnimationSetPrefab, EndControl,
     },
+    assets::AssetStorage,
     assets::{PrefabLoader, ProgressCounter, RonFormat},
+    audio::{output::Output, Source},
     core::{Time, Transform},
-    ecs::{Entities, Entity, Join, WriteStorage},
+    ecs::{Entities, Entity, Join, ReadExpect, WriteStorage},
     prelude::*,
     renderer::rendy::mesh::{Normal, Position, Tangent, TexCoord},
     shred::Read,
@@ -17,6 +18,7 @@ use amethyst::{
     utils::scene::BasicScenePrefab,
 };
 use serde::{Deserialize, Serialize};
+use std::time::Duration;
 
 use crate::gamedata::CustomGameData;
 #[derive(Eq, PartialOrd, PartialEq, Hash, Debug, Copy, Clone, Deserialize, Serialize)]
@@ -53,6 +55,8 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Intr
     fn on_start(&mut self, data: StateData<'_, CustomGameData<'a, 'b>>) {
         let StateData { mut world, .. } = data;
 
+        crate::audio::initialise_audio(world);
+
         let prefab_handle = world.exec(|loader: PrefabLoader<'_, StoryPrefab>| {
             loader.load("story.ron", RonFormat, &mut self.prog)
         });
@@ -76,25 +80,37 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Intr
             if !self.zoom_started {
                 // start approach
 
-                let animation = world
-                    .read_storage::<AnimationSet<AnimationId, Transform>>()
-                    .get(self.moon.unwrap())
-                    .and_then(|s| s.get(&AnimationId::Translate))
-                    .cloned()
-                    .unwrap();
-                let mut sets = world.write_storage();
-                let control_set =
-                    get_animation_set::<AnimationId, Transform>(&mut sets, self.moon.unwrap())
+                {
+                    let animation = world
+                        .read_storage::<AnimationSet<AnimationId, Transform>>()
+                        .get(self.moon.unwrap())
+                        .and_then(|s| s.get(&AnimationId::Translate))
+                        .cloned()
                         .unwrap();
-                control_set.add_animation(
-                    AnimationId::Translate,
-                    &animation,
-                    EndControl::Stay,
-                    1.0,
-                    AnimationCommand::Start,
-                );
-
+                    let mut sets = world.write_storage();
+                    let control_set =
+                        get_animation_set::<AnimationId, Transform>(&mut sets, self.moon.unwrap())
+                            .unwrap();
+                    control_set.add_animation(
+                        AnimationId::Translate,
+                        &animation,
+                        EndControl::Stay,
+                        1.0,
+                        AnimationCommand::Start,
+                    );
+                }
                 self.zoom_started = true;
+
+                world.exec(
+                    |data: (
+                        Read<'_, AssetStorage<Source>>,
+                        ReadExpect<'_, Sounds>,
+                        Option<Read<'_, Output>>,
+                    )| {
+                        let (storage, sounds, audio_output) = data;
+                        crate::audio::play_intro(&*sounds, &storage, audio_output.as_deref());
+                    },
+                )
             }
 
             // start intro terminal
@@ -102,7 +118,7 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Intr
                 let (time, mut ui_text) = data;
 
                 if let Some(story_text) = ui_text.get_mut(self.story.unwrap()) {
-                    if time.frame_number() % 30 == 0 {
+                    if time.frame_number() % 60 == 0 {
                         story_text.text += "\nBooted";
                     }
                 }
@@ -110,7 +126,7 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Intr
 
             let time = world.read_resource::<Time>();
 
-            if time.absolute_time() > Duration::from_secs(10) {
+            if time.absolute_time() > Duration::from_secs(15) {
                 return Trans::Switch(Box::new(super::LoadingState::default()));
             }
         }

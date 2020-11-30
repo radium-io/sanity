@@ -1,9 +1,13 @@
+use crate::audio::Music;
+use crate::state::intro::AnimationId;
+use amethyst::audio::DjSystemDesc;
 use amethyst::{
     animation::{AnimationBundle, AnimationSetPrefab},
     assets::{
         Handle, HotReloadBundle, HotReloadStrategy, PrefabData, PrefabLoaderSystemDesc, Processor,
         ProgressCounter,
     },
+    audio::AudioBundle,
     core::{frame_limiter::FrameRateLimitStrategy, transform::TransformBundle, Hidden, Transform},
     derive::PrefabData,
     ecs::{prelude::*, ReadStorage, SystemData, World},
@@ -30,8 +34,7 @@ use amethyst::{
 use serde::Deserialize;
 use std::{fmt::Debug, marker::PhantomData};
 
-use crate::state::intro::AnimationId;
-
+mod audio;
 mod component;
 mod gamedata;
 mod map;
@@ -76,6 +79,11 @@ fn main() -> Result<()> {
         .with_base(
             PrefabLoaderSystemDesc::<crate::state::intro::StoryPrefab>::default(),
             "intro_loader",
+            &[],
+        )
+        .with_base(
+            DjSystemDesc::new(|music: &mut Music| music.music.next()),
+            "dj_system",
             &[],
         )
         //.with_base(CameraOrthoSystem::default(), "ortho_camera_system", &[])
@@ -144,6 +152,7 @@ fn main() -> Result<()> {
             &["collision_system"],
         )
         .with_base(Processor::<sanity_lib::assets::Pairs>::new(), "", &[])
+        .with_base_bundle(AudioBundle::default())
         .with_base_bundle(
             RenderingBundle::<DefaultBackend>::new()
                 .with_plugin(
