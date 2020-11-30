@@ -17,6 +17,9 @@ use amethyst::{
 use bracket_pathfinding::prelude::Point;
 use sanity_lib::tile::{FloorTile, RoomTile};
 
+pub static LEVEL_SIZES: &'static [(u32, u32)] =
+    &[(12, 12), (24, 24), (48, 32), (32, 48), (64, 64), (8, 8)];
+
 pub struct RoomState {
     pub level: usize,
     pub width: u32,
@@ -168,6 +171,7 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Room
                 )| {
                     let mut pos = positions.get_mut(self.player.unwrap()).unwrap();
                     pos.map = self.walls.unwrap();
+                    pos.pos = start;
 
                     let p = maps.get(self.walls.unwrap()).unwrap();
                     let mut t = Transform::from(
@@ -268,8 +272,8 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Room
             );
             return Trans::Push(Box::new(RoomState {
                 level: self.level + 1,
-                width: 24,
-                height: 24,
+                width: LEVEL_SIZES[self.level].0,
+                height: LEVEL_SIZES[self.level].1,
                 player: self.player,
                 camera: self.camera,
                 player_anim: self.player_anim.clone(),

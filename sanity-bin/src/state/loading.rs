@@ -114,8 +114,8 @@ impl<'a, 'b> State<crate::gamedata::CustomGameData<'a, 'b>, StateEvent> for Load
             Trans::Push(Box::new(RoomState {
                 camera: None,
                 level: 1,
-                width: 12,
-                height: 12,
+                width: crate::state::room::LEVEL_SIZES[0].0,
+                height: crate::state::room::LEVEL_SIZES[0].1,
                 player_anim: self.player.take().expect("Player Loaded"),
                 map_spritesheet: self.map.take().expect("Map Loaded"),
                 pairs: self.pairs.take().expect("Pairs Loaded"),

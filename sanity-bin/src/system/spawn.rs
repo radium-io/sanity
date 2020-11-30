@@ -181,8 +181,10 @@ impl<'a> System<'a> for SpawnSystem {
 
                             let mut num_exits = (&exits).join().count();
 
-                            while spawnable.len() >= 1 && num_exits < 1 {
-                                let pos = spawnable.choose(&mut rng).unwrap();
+                            while num_exits < 1
+                                && sanity_res.level.len() < crate::state::room::LEVEL_SIZES.len()
+                            {
+                                let pos = near_to_far.last().unwrap(); // furthest point
                                 let p = my_map.index_to_point2d(pos.0);
                                 if item_positions.iter().any(|x| x.1.pos == p) {
                                     println!(
