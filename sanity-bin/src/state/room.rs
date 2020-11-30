@@ -136,16 +136,12 @@ impl RoomState {
                 let floor = floor_maps.get_mut(self.floors.unwrap()).unwrap();
                 let walls = wall_maps.get_mut(self.walls.unwrap()).unwrap();
                 for (_, pos) in (&players, &positions).join() {
-                    if pos.xy() < Point2::new(self.width - 3, self.height - 3)
-                        && pos.xy() > Point2::new(2, 2)
-                    {
-                        crate::map::gen_map(
-                            walls,
-                            floor,
-                            assets.get(&self.pairs.clone()).unwrap(),
-                            pos.coord(),
-                        );
-                    }
+                    crate::map::gen_map(
+                        walls,
+                        floor,
+                        assets.get(&self.pairs.clone()).unwrap(),
+                        pos.coord(),
+                    );
                 }
             },
         );
