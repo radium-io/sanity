@@ -1,5 +1,7 @@
 # Moonsanity
 
+![screenshot](https://img.itch.zone/aW1hZ2UvODM4MzYyLzQ3MDI4MTEucG5n/original/5vqp5n.png)
+
 This game is an exploration of three things:
 
 1. Rust
