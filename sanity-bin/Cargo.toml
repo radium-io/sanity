@@ -12,7 +12,7 @@ amethyst = {version = "0.15.3", features = ["no-slow-safety-checks", "tiles"]}
 direction = {version = "0.17.10", features = ["rand"]}
 log = { version = "0.4.11", features = ["serde"] }
 rand = "0.7.3"
-ron = "0.6.2"
+ron = "0.6.4"
 serde = "1.0.117"
 wfc = "0.9.2"
 bracket-pathfinding = "0.8.1"
