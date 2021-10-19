@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 sanity-lib = { path = "../sanity-lib" }
 amethyst = {version = "0.15.3", features = ["no-slow-safety-checks", "tiles"]}
-direction = {version = "0.17.10", features = ["rand"]}
+direction = {version = "0.18.1", features = ["rand"]}
 log = { version = "0.4.11", features = ["serde"] }
 rand = "0.7.3"
 ron = "0.6.2"
