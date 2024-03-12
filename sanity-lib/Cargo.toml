@@ -10,7 +10,7 @@ edition = "2018"
 amethyst = "0.15.3"
 bracket-pathfinding = "0.8.1"
 serde = "1.0.117"
-strum = "0.19.5"
+strum = "0.26.2"
 strum_macros = "0.19.4"
 
 [features]
